@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"com.tiendaropa.catalogo.gui"},{"l":"com.tiendaropa.catalogo.modelo"},{"l":"com.tiendaropa.catalogo.repositorio"},{"l":"com.tiendaropa.catalogo.utilidades"}];updateSearchResults();
