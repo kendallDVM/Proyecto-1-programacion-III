@@ -18,7 +18,7 @@ import java.util.List;
  ------------------------
  *author Liseth Briones
  */
-public class PanelDisponibles {
+public class PanelDisponibles extends JPanel{
 
     // ========== ATRIBUTOS ==========
 
