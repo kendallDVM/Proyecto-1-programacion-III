@@ -87,22 +87,4 @@ public class LineaCarrito {
                 precioEnMomento);       // Precio congelado
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

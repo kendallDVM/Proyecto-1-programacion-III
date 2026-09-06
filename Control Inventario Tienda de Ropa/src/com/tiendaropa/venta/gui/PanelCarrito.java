@@ -164,19 +164,29 @@ public class PanelCarrito extends JPanel {
      * Actualiza también los totales.
      */
     public void recargar() {
+
+        System.out.println("\n=== RECARGANDO CARRITO ===");
+
         // Limpiar tabla
         modeloTabla.setRowCount(0);
 
         // Obtener líneas del carrito
         List<LineaCarrito> lineas = carrito.getLineas();
 
+        System.out.println("Items en carrito: " + lineas.size());
+
         // Agregar cada línea a la tabla
         for (LineaCarrito linea : lineas) {
+
+            System.out.println("  - " + linea.getPrenda().getCodigo() + ": ¢" + linea.getSubtotal());
+
             agregarFilaCarrito(linea);
         }
 
         // Actualizar totales
         actualizarTotales();
+
+        System.out.println("===================================\n");
     }
 
 
@@ -188,7 +198,7 @@ public class PanelCarrito extends JPanel {
                 linea.getPrenda().getCodigo(),
                 linea.getPrenda().getTipo().toString(),
                 linea.getPrenda().getTalla().toString(),
-                String.format("¢%,.0f", linea.getSubtotal())
+                String.format("¢%,.2f", linea.getSubtotal())
         };
         modeloTabla.addRow(fila);
     }

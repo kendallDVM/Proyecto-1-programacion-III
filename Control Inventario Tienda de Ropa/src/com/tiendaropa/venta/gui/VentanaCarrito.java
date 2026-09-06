@@ -32,9 +32,31 @@ public class VentanaCarrito extends JFrame {
      * @param gestionPrendas Implementación de IGestionPrendas (del Módulo 1)
      */
     public VentanaCarrito(IGestionPrendas gestionPrendas) {
+
         this.gestionPrendas = gestionPrendas;
         this.carrito = new Carrito();
         this.servicioBusqueda = new ServicioBusqueda(gestionPrendas);
+
+        /** DEBUG
+        System.out.println("\n=== VENTANA CARRITO ABIERTA ===");
+        java.util.List<com.tiendaropa.catalogo.modelo.Prenda> todasLasPrendas = gestionPrendas.obtenerTodas();
+        System.out.println("Prendas disponibles en Módulo 1: " + todasLasPrendas.size());
+        for (com.tiendaropa.catalogo.modelo.Prenda p : todasLasPrendas) {
+            System.out.println("  - " + p.getCodigo() + ": " + p.getTipo() + ", Talla: " + p.getTalla() + ", Precio: " + p.getPrecio());}
+        System.out.println("===================================\n");
+        */
+
+        // DEBUG CRÍTICO
+        System.out.println("\n=== VERIFICANDO CONEXIÓN ===");
+        java.util.List<com.tiendaropa.catalogo.modelo.Prenda> prendas = gestionPrendas.obtenerTodas();
+        System.out.println("Prendas en RepositorioPrendas: " + prendas.size());
+        for (com.tiendaropa.catalogo.modelo.Prenda p : prendas) {
+            System.out.println("  ✓ " + p.getCodigo() + ": " + p.getTipo());
+        }
+        System.out.println("===============================\n");
+
+
+
 
         // Configurar la ventana principal
         configurarVentana();
@@ -77,13 +99,11 @@ public class VentanaCarrito extends JFrame {
      * Crea los tres paneles que componen la ventana.
      */
     private void crearPaneles() {
-        // Panel de búsqueda (filtros en la parte superior)
         panelBusqueda = new PanelBusqueda(servicioBusqueda, this);
 
-        // Panel de disponibles (prendas encontradas en el centro-izquierda)
         panelDisponibles = new PanelDisponibles(carrito, this);
+        panelDisponibles.setPanelBusqueda(panelBusqueda);  // ← AGREGA ESTA LÍNEA
 
-        // Panel del carrito (carrito y totales en el centro-derecha)
         panelCarrito = new PanelCarrito(carrito, this);
     }
 
@@ -132,25 +152,6 @@ public class VentanaCarrito extends JFrame {
         // Por ahora, solo para verificar que compila
         // Esto se reemplazará con Main2.java que inyecta las dependencias reales
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

@@ -33,8 +33,9 @@ public class VentanaCatalogo extends JFrame {
     /**
      * Construye la ventana principal, organiza los paneles y carga los datos.
      */
-    public VentanaCatalogo() {
-        this.repositorio = new RepositorioPrendas();
+    public VentanaCatalogo(RepositorioPrendas repositorio) {
+
+        this.repositorio = repositorio;
 
         setTitle("Catálogo - Tienda de Ropa de Segunda Mano");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -94,7 +95,7 @@ public class VentanaCatalogo extends JFrame {
      *
      * @param args argumentos de línea de comandos (no utilizados).
      */
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -103,5 +104,5 @@ public class VentanaCatalogo extends JFrame {
             }
             new VentanaCatalogo().setVisible(true);
         });
-    }
+    }*/
 }

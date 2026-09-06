@@ -77,12 +77,17 @@ public class PanelBusqueda extends JPanel {
         JLabel lblTipo = new JLabel("Tipo:");
         cmbTipo = new JComboBox<>();
         cmbTipo.addItem("");  // Opción vacía (sin filtro)
-        cmbTipo.addItem("PANTALON");
-        cmbTipo.addItem("BLUSA");
-        cmbTipo.addItem("CHAQUETA");
-        cmbTipo.addItem("FALDA");
-        cmbTipo.addItem("VESTIDO");
         cmbTipo.addItem("CAMISETA");
+        cmbTipo.addItem("CAMISA");
+        cmbTipo.addItem("PANTALON");
+        cmbTipo.addItem("VESTIDO");
+        cmbTipo.addItem("FALDA");
+        cmbTipo.addItem("CHAQUETA");
+        cmbTipo.addItem("ABRIGO");
+        cmbTipo.addItem("SUETER");
+        cmbTipo.addItem("BUZO");
+        cmbTipo.addItem("ZAPATOS");
+        cmbTipo.addItem("ACCESORIO");
 
         // TALLA
         JLabel lblTalla = new JLabel("Talla:");
@@ -94,6 +99,7 @@ public class PanelBusqueda extends JPanel {
         cmbTalla.addItem("L");
         cmbTalla.addItem("XL");
         cmbTalla.addItem("XXL");
+        cmbTalla.addItem("UNICA");
 
         // PRECIO MÍNIMO
         JLabel lblPrecioMin = new JLabel("Precio Min (¢):");
@@ -142,9 +148,12 @@ public class PanelBusqueda extends JPanel {
      */
 
     private void buscar() {
+
         // Obtener valores de los filtros
         String tipo = (String) cmbTipo.getSelectedItem();
         String talla = (String) cmbTalla.getSelectedItem();
+
+        System.out.println("DEBUG: Buscando - Tipo: " + tipo + ", Talla: " + talla);  // ← AGREGA ESTO
 
         // Obtener precios (convertir de String a double)
         double precioMin = 0;
@@ -206,6 +215,13 @@ public class PanelBusqueda extends JPanel {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    //Retorna el servicio de búsqueda.
+    //Se usa para que PanelDisponibles acceda a él.
+
+    public com.tiendaropa.venta.servicio.ServicioBusqueda getServicioBusqueda() {
+        return servicioBusqueda;
     }
 
 }

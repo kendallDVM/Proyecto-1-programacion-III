@@ -139,14 +139,49 @@ public class PanelDisponibles extends JPanel{
      * Recarga la tabla con los resultados de la búsqueda.
      * Se llama desde VentanaCarrito cuando presionan "Buscar".
      */
+
     public void recargar() {
-        // Limpiar tabla actual
+        System.out.println("DEBUG: recargar() llamado");
         modeloTabla.setRowCount(0);
 
-        // Obtener el panel de búsqueda (lo crearemos cuando integremos)
-        // Por ahora, se mantiene vacío
-        // Esto se implementará cuando PanelBusqueda esté completamente integrado
+        // Verificar que panelBusqueda está conectado
+        if (panelBusqueda == null) {
+            System.out.println("DEBUG: ERROR - panelBusqueda es NULL");
+            return;
+        }
+        System.out.println("DEBUG: panelBusqueda OK");
+
+        // Obtener filtros del panel de búsqueda
+        String tipo = panelBusqueda.getTipo();
+        String talla = panelBusqueda.getTalla();
+        double precioMin = panelBusqueda.getPrecioMin();
+        double precioMax = panelBusqueda.getPrecioMax();
+
+        System.out.println("DEBUG: Filtros - Tipo: " + tipo + ", Talla: " + talla + ", Min: " + precioMin + ", Max: " + precioMax);
+
+        // Obtener servicio de búsqueda
+        com.tiendaropa.venta.servicio.ServicioBusqueda servicio =
+                panelBusqueda.getServicioBusqueda();
+
+        if (servicio == null) {
+            System.out.println("DEBUG: ERROR - servicio es NULL");
+            return;
+        }
+        System.out.println("DEBUG: servicio OK");
+
+        // Realizar búsqueda con los filtros
+        java.util.List<com.tiendaropa.catalogo.modelo.Prenda> prendas =
+                servicio.buscarAvanzado(tipo, talla, precioMin, precioMax);
+
+        System.out.println("DEBUG: Búsqueda retornó " + prendas.size() + " prendas");
+
+        // Agregar cada prenda a la tabla
+        for (com.tiendaropa.catalogo.modelo.Prenda prenda : prendas) {
+            System.out.println("DEBUG: Agregando prenda: " + prenda.getCodigo());
+            agregarFilaPrenda(prenda);
+        }
     }
+
 
     /**
      * Agrega la prenda seleccionada al carrito.
@@ -154,6 +189,7 @@ public class PanelDisponibles extends JPanel{
     private void agregarAlCarrito() {
         // Verificar que hay una fila seleccionada
         int filaSeleccionada = tblPrendas.getSelectedRow();
+
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(this,
                     "Por favor selecciona una prenda",
@@ -161,19 +197,48 @@ public class PanelDisponibles extends JPanel{
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        // Obtener datos de la prenda seleccionada
+
+        // Obtener el código de la prenda seleccionada
         String codigo = (String) modeloTabla.getValueAt(filaSeleccionada, 0);
 
-        // Nota: Aquí obtendremos la Prenda real del servicio de búsqueda
-        // Por ahora solo mostramos un mensaje
+        // Buscar la prenda real en el repositorio mediante el servicio
+        Prenda prendaSeleccionada = panelBusqueda.getServicioBusqueda()
+                .obtenerDisponibles()
+                .stream()
+                .filter(prenda -> prenda.getCodigo().equals(codigo))
+                .findFirst()
+                .orElse(null);
 
-        JOptionPane.showMessageDialog(this,
-                "Prenda agregada: " + codigo,
-                "Éxito",
-                JOptionPane.INFORMATION_MESSAGE);
+        // Verificar que la prenda exista
+        if (prendaSeleccionada == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontró la prenda seleccionada",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        // Actualizar panel del carrito
-        ventanaCarrito.actualizarCarrito();
+        // Crear la línea del carrito
+        LineaCarrito linea = new LineaCarrito(prendaSeleccionada);
+
+        // Agregar la línea al carrito
+        boolean agregada = carrito.agregarLinea(linea);
+
+        if (agregada) {
+            JOptionPane.showMessageDialog(this,
+                    "Prenda agregada: " + codigo,
+                    "Éxito",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Actualizar panel del carrito
+            ventanaCarrito.actualizarCarrito();
+
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "La prenda ya se encuentra en el carrito",
+                    "Advertencia",
+                    JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     // ========== MÉTODO PARA AGREGAR FILAS A LA TABLA ==========
@@ -189,7 +254,7 @@ public class PanelDisponibles extends JPanel{
                 prenda.getTipo().toString(),
                 prenda.getTalla().toString(),
                 prenda.getEstado().toString(),
-                String.format("¢%,.0f", prenda.getPrecio())
+                String.format("¢%,.2f", prenda.getPrecio())
         };
         modeloTabla.addRow(fila);
     }
@@ -203,4 +268,9 @@ public class PanelDisponibles extends JPanel{
         return tblPrendas.getSelectedRow();
     }
 
+    //Establece el panel de búsqueda (para acceder a los filtros).
+    public void setPanelBusqueda(PanelBusqueda panelBusqueda) {
+
+        this.panelBusqueda = panelBusqueda;
+    }
 }
