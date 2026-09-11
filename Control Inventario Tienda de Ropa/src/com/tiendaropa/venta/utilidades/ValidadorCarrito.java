@@ -1,90 +1,78 @@
 package com.tiendaropa.venta.utilidades;
 
-
-
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
 
-
-
 /**
- * Clase utilidad que valida datos y reglas de negocio del carrito.
- * Centraliza todas las validaciones relacionadas con el carrito
- * para evitar duplicar código en múltiples lugares.
- * @author Liseth Briones
+ * Clase de utilidad que valida datos y reglas de negocio del carrito.
+ *
+ * <p>Centraliza las validaciones relacionadas con el carrito para evitar
+ * duplicar código en múltiples lugares.</p>
  */
-public class ValidadorCarrito {
+public final class ValidadorCarrito {
 
     /**
-     * Valida que el carrito NO esté vacío.
-     -------------------------------------
-     * @param carrito Carrito a validar
-     * @return true si el carrito está vacío, false si tiene items
-     * @throws IllegalArgumentException si carrito es nulo
+     * Constructor privado para impedir la instanciación de la utilidad.
+     */
+    private ValidadorCarrito() {
+    }
+
+    /**
+     * Indica si el carrito está vacío.
+     *
+     * @param carrito carrito a validar.
+     * @return {@code true} si el carrito está vacío, {@code false} si tiene items.
+     * @throws IllegalArgumentException si el carrito es nulo.
      */
     public static boolean validarCarritoVacio(Carrito carrito) {
-        // Verifica que carrito no sea nulo
         if (carrito == null) {
             throw new IllegalArgumentException("El carrito no puede ser nulo");
         }
-        // Retorna true si está vacío (estaVacio() retorna true)
-        // Retorna false si tiene items
         return carrito.estaVacio();
     }
 
-
     /**
-     * Valida que una LineaCarrito NO sea nula.
-     -----------------------------------------
-     * @param linea LineaCarrito a validar
-     * @return true si es válida, false si es nula
+     * Indica si una línea de carrito es válida (no nula).
+     *
+     * @param linea línea de carrito a validar.
+     * @return {@code true} si es válida, {@code false} si es nula.
      */
     public static boolean validarLineaCarrito(LineaCarrito linea) {
-        // Retorna true si linea es diferente de null
-        // Retorna false si linea es null
         return linea != null;
     }
 
     /**
-     * Valida que un código de prenda NO esté vacío.
-     ---------------------------------------------
-     * @param codigo Código a validar
-     * @return true si es válido, false si es null o vacío
+     * Indica si un código de prenda es válido (no nulo ni vacío).
+     *
+     * @param codigo código a validar.
+     * @return {@code true} si es válido, {@code false} si es nulo o vacío.
      */
     public static boolean validarCodigoPrenda(String codigo) {
-        // Verifica que código no sea null Y no esté vacío
         return codigo != null && !codigo.isEmpty();
     }
 
-
-
     /**
-     * Valida que el carrito tenga al menos 1 item.
-     * Se usa antes de proceder a checkout.
-     * @param carrito Carrito a validar
-     * @return true si tiene items (no está vacío)
-     * @throws IllegalArgumentException si carrito es nulo
+     * Indica si el carrito tiene al menos un item. Se usa antes de proceder
+     * al checkout.
+     *
+     * @param carrito carrito a validar.
+     * @return {@code true} si tiene items, {@code false} si está vacío.
+     * @throws IllegalArgumentException si el carrito es nulo.
      */
     public static boolean validarCarritoTieneItems(Carrito carrito) {
-        // Verifica que carrito no sea nulo
         if (carrito == null) {
             throw new IllegalArgumentException("El carrito no puede ser nulo");
         }
-        // Retorna true si tiene items (cantidad > 0)
-        // Retorna false si está vacío
         return carrito.obtenerCantidadItems() > 0;
     }
 
     /**
-     * Valida que el subtotal sea válido (mayor a 0).
-     * @param subtotal Subtotal a validar
-     * @return true si es válido (> 0), false si no
+     * Indica si un subtotal es válido (mayor que cero).
+     *
+     * @param subtotal subtotal a validar.
+     * @return {@code true} si es mayor que 0, {@code false} si es 0 o negativo.
      */
     public static boolean validarSubtotal(double subtotal) {
-        // Retorna true si subtotal es mayor que 0
-        // Retorna false si es 0 o negativo
         return subtotal > 0;
     }
-
-
 }

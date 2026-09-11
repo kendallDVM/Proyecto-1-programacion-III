@@ -65,7 +65,10 @@ public class PanelCarrito extends JPanel {
     }
 
                  // ========== CONFIGURACIÓN DEL PANEL ==========
-    //Configura las propiedades básicas del panel.
+
+    /**
+     * Configura las propiedades básicas del panel.
+     */
     private void configurarPanel() {
         // Usar BorderLayout
         setLayout(new BorderLayout(5, 5));
@@ -327,15 +330,19 @@ public class PanelCarrito extends JPanel {
     // ========== GETTERS ==========
 
     /**
-     * Retorna el total a pagar (con IVA).
+     * Devuelve el total a pagar del carrito (subtotal más IVA).
+     *
+     * @return total a pagar en colones.
      */
     public double getTotalAPagar() {
         double subtotal = carrito.calcularSubtotal();
-        return subtotal * 1.13;  // Subtotal + 13% IVA
+        return subtotal * 1.13;
     }
 
     /**
-     * Retorna el cantidad de items en el carrito.
+     * Devuelve la cantidad de items que hay en el carrito.
+     *
+     * @return número de líneas del carrito.
      */
     public int getCantidadItems() {
         return carrito.obtenerCantidadItems();

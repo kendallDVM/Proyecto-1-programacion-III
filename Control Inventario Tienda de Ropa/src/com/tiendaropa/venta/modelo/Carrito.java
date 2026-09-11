@@ -66,8 +66,9 @@ public class Carrito implements ICarrito {
 
     /**
      * Elimina una línea del carrito por código de prenda.
-     * @param codigoPrenda Código único de la prenda a eliminar
-     * @return true si se eliminó, false si no existía
+     *
+     * @param codigoPrenda código único de la prenda a eliminar.
+     * @return {@code true} si se eliminó, {@code false} si no existía.
      */
     public boolean eliminarLinea(String codigoPrenda) {
         // Usa removeIf para eliminar la línea cuyo código coincida
@@ -75,36 +76,54 @@ public class Carrito implements ICarrito {
                 .equals(codigoPrenda));
     }
 
+    /**
+     * Calcula el subtotal del carrito sumando el subtotal de todas sus líneas.
+     *
+     * @return subtotal del carrito en colones.
+     */
     @Override
     public double calcularSubtotal() {
-        // Suma todos los subtotales de las líneas usando Stream
         return lineas.stream()
                 .mapToDouble(LineaCarrito::getSubtotal)
                 .sum();
     }
 
+    /**
+     * Devuelve la cantidad de items (líneas) que hay en el carrito.
+     *
+     * @return número de líneas del carrito.
+     */
     @Override
     public int obtenerCantidadItems() {
-        // Retorna la cantidad de elementos en la lista
         return lineas.size();
     }
 
+    /**
+     * Devuelve las líneas del carrito.
+     *
+     * @return copia de la lista de líneas (no la referencia original).
+     */
     @Override
     public List<LineaCarrito> getLineas() {
-        // Retorna una copia de la lista (no la original)
         return new ArrayList<>(lineas);
     }
 
+    /**
+     * Vacía completamente el carrito y reinicia su estado a {@code ACTIVO}.
+     */
     @Override
     public void limpiar() {
-        // Vacía la lista y reinicia estado
         lineas.clear();
         estado = EstadoCarrito.ACTIVO;
     }
 
+    /**
+     * Indica si el carrito está vacío.
+     *
+     * @return {@code true} si no tiene items, {@code false} en caso contrario.
+     */
     @Override
     public boolean estaVacio() {
-        // Verifica si la lista está vacía
         return lineas.isEmpty();
     }
 

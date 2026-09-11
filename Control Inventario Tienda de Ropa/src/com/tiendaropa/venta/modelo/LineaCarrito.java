@@ -46,29 +46,35 @@ public class LineaCarrito {
     // ========== GETTERS ==========
 
     /**
-     * Retorna la prenda de esta línea.
-     * @return Objeto Prenda
+     * Devuelve la prenda contenida en esta línea.
+     *
+     * @return objeto {@link Prenda} de la línea.
      */
     public Prenda getPrenda() {return prenda;}
 
     /**
-     * Retorna el precio congelado al momento de agregación.
-     * @return double: precio en colones
+     * Devuelve el precio congelado al momento en que se agregó la prenda.
+     *
+     * @return precio en colones congelado.
      */
     public double getPrecioEnMomento() {return precioEnMomento;}
 
     /**
-      Retorna el subtotal de esta línea.
-      Como cantidad siempre es 1 (ropa única), subtotal = precio.
-      @return double: subtotal en colones
+     * Devuelve el subtotal de esta línea.
+     *
+     * <p>Como cada prenda es única (ropa de segunda mano), la cantidad siempre
+     * es 1 y, por lo tanto, el subtotal equivale al precio congelado.</p>
+     *
+     * @return subtotal de la línea en colones.
      */
     public double getSubtotal() {
-        return precioEnMomento; // Cantidad = 1 siempre
+        return precioEnMomento;
     }
 
     /**
-     * Retorna cuándo se agregó esta línea al carrito.
-     * @return LocalDateTime
+     * Devuelve la fecha y hora en que se agregó esta línea al carrito.
+     *
+     * @return fecha y hora de agregación.
      */
     public LocalDateTime getFechaAgregacion() {
         return fechaAgregacion;
@@ -77,14 +83,15 @@ public class LineaCarrito {
     // ========== MÉTODO toString ==========
 
     /**
-     * Retorna representación en texto para debugging.
-     * @return String con formato: "PR001 - ¢25,000"
+     * Devuelve una representación textual de la línea para depuración.
+     *
+     * @return cadena con el formato {@code PR001 - ¢25,000}.
      */
     @Override
     public String toString() {
         return String.format("%s - ¢%,.0f",
-                prenda.getCodigo(),     // Código de la prenda
-                precioEnMomento);       // Precio congelado
+                prenda.getCodigo(),
+                precioEnMomento);
     }
 
 }

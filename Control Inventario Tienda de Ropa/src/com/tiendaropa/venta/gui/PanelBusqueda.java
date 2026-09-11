@@ -58,7 +58,9 @@ public class PanelBusqueda extends JPanel {
 
     // ========== CONFIGURACIÓN DEL PANEL ==========
 
-    //Configura las propiedades básicas del panel.
+    /**
+     * Configura las propiedades básicas del panel.
+     */
     private void configurarPanel() {
         // Usar FlowLayout para organizar componentes en fila
         setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
@@ -72,8 +74,9 @@ public class PanelBusqueda extends JPanel {
 
     // ========== CREACIÓN DE COMPONENTES ==========
 
-
-     // Crea todos los componentes de búsqueda
+    /**
+     * Crea todos los componentes del panel de búsqueda.
+     */
     private void crearComponentes() {
         // TIPO DE PRENDA
         JLabel lblTipo = new JLabel("Tipo:");
@@ -133,17 +136,13 @@ public class PanelBusqueda extends JPanel {
 
     /**
      * Se ejecuta cuando el usuario presiona el botón "Buscar".
-     * Obtiene los valores de los filtros y llama a ventanaCarrito
-     * para actualizar el panel de disponibles.
+     *
+     * <p>Valida los campos de precio y actualiza el panel de prendas
+     * disponibles invocando a la ventana principal.</p>
      */
-
     private void buscar() {
 
-        // Obtener valores de los filtros
-        String tipo = getTipo();
-        String talla = getTalla();
-
-        // Obtener precios (convertir de String a double)
+        // Validar precios (convertir de String a double)
         double precioMin = 0;
         double precioMax = 0;
 
@@ -162,30 +161,37 @@ public class PanelBusqueda extends JPanel {
             return;
         }
 
-        // Guardar los filtros en variables de instancia para que PanelDisponibles los use
-        // (veremos esto cuando creemos PanelDisponibles)
-
         // Actualizar panel de disponibles
         ventanaCarrito.actualizarDisponibles();
     }
 
     // ========== GETTERS (para que otros paneles accedan a los filtros) ==========
 
-
-    // Retorna el tipo de prenda seleccionado.
+    /**
+     * Devuelve el tipo de prenda seleccionado en el filtro.
+     *
+     * @return nombre del tipo de prenda, o {@code null} si no se seleccionó ninguno.
+     */
     public String getTipo() {
         TipoPrenda tipo = (TipoPrenda) cmbTipo.getSelectedItem();
         return (tipo != null) ? tipo.name() : null;
     }
 
-     //Retorna la talla seleccionada.
+    /**
+     * Devuelve la talla seleccionada en el filtro.
+     *
+     * @return nombre de la talla, o {@code null} si no se seleccionó ninguna.
+     */
     public String getTalla() {
         Talla talla = (Talla) cmbTalla.getSelectedItem();
         return (talla != null) ? talla.name() : null;
     }
 
-
-    //Retorna el precio mínimo ingresado.
+    /**
+     * Devuelve el precio mínimo ingresado en el filtro.
+     *
+     * @return precio mínimo, o {@code 0} si el campo está vacío o es inválido.
+     */
     public double getPrecioMin() {
         try {
             String valor = txtPrecioMin.getText();
@@ -195,7 +201,11 @@ public class PanelBusqueda extends JPanel {
         }
     }
 
-    //Retorna el precio máximo ingresado.
+    /**
+     * Devuelve el precio máximo ingresado en el filtro.
+     *
+     * @return precio máximo, o {@code 0} si el campo está vacío o es inválido.
+     */
     public double getPrecioMax() {
         try {
             String valor = txtPrecioMax.getText();
@@ -205,9 +215,11 @@ public class PanelBusqueda extends JPanel {
         }
     }
 
-    //Retorna el servicio de búsqueda.
-    //Se usa para que PanelDisponibles acceda a él.
-
+    /**
+     * Devuelve el servicio de búsqueda asociado al panel.
+     *
+     * @return el {@link ServicioBusqueda} del panel.
+     */
     public ServicioBusqueda getServicioBusqueda() {
         return servicioBusqueda;
     }

@@ -12,15 +12,13 @@ package com.tiendaropa.venta.modelo;
 
 public enum EstadoCarrito {
 
-    //Cliente está agregando y quitando prendas del carrito.
+    /** Cliente está agregando y quitando prendas del carrito. */
     ACTIVO,
 
-    //El carrito está siendo procesado en checkout.
+    /** El carrito está siendo procesado en el checkout. */
     PROCESANDO,
 
-    //La venta ha sido completada exitosamente.
-    COMPLETADO
-
-
+    /** La venta ha sido completada exitosamente. */
+    COMPLETADO;
 
 }

@@ -43,18 +43,32 @@ public interface ICarrito {
      */
     double calcularSubtotal();
 
-    //Retorna cantidad de items en carrito.
-    //@return int: número de líneas
+    /**
+     * Devuelve la cantidad de items (líneas) que hay en el carrito.
+     *
+     * @return número de líneas del carrito.
+     */
     int obtenerCantidadItems();
 
-    List<LineaCarrito> getLineas();   //* Retorna copia de las líneas en carrito.
-                                    // (Copia, no referencia original, para seguridad)
+    /**
+     * Devuelve las líneas del carrito.
+     *
+     * @return copia de la lista de líneas del carrito (no la referencia
+     *         original, para evitar modificaciones externas).
+     */
+    List<LineaCarrito> getLineas();
 
-      void limpiar(); //Vacía completamente el carrito.
-                     //Se llama después de compra exitosa.
+    /**
+     * Vacía completamente el carrito, eliminando todas sus líneas.
+     */
+    void limpiar();
 
-    boolean estaVacio(); //Verifica si el carrito está vacío.
-                        //@return boolean: true si no hay items
+    /**
+     * Indica si el carrito está vacío.
+     *
+     * @return {@code true} si no tiene items, {@code false} en caso contrario.
+     */
+    boolean estaVacio();
 
 
     /**
