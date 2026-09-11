@@ -5,33 +5,35 @@ import com.tiendaropa.catalogo.modelo.Prenda;
 import com.tiendaropa.catalogo.modelo.Talla;
 import com.tiendaropa.catalogo.modelo.TipoPrenda;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Implementación en memoria de {@link IGestionPrendas} para el catálogo
  * de ropa de segunda mano.
  *
- * <p>Los datos se almacenan en un {@link HashMap} indexado por el código
- * de la prenda, lo que permite búsquedas directas de complejidad O(1).
- * Las operaciones de filtrado y búsqueda usan {@code java.util.stream}
- * sobre los valores del mapa.</p>
+ * <p>Extiende {@link BaseRepositorio} para reutilizar las operaciones CRUD
+ * genéricas (registrar, buscar, actualizar, eliminar y listar), aportando
+ * únicamente la clave de cada prenda y los filtros específicos del dominio
+ * (tipo, talla, estado, precio y búsqueda por texto).</p>
  */
-public class RepositorioPrendas implements IGestionPrendas {
-
-    /** Mapa que asocia el código único de cada prenda con su dato. */
-    private final Map<String, Prenda> prendasPorCodigo;
+public class RepositorioPrendas extends BaseRepositorio<Prenda> implements IGestionPrendas {
 
     /**
-     * Constructor por defecto que inicializa el mapa en memoria vacío.
+     * Constructor por defecto que inicializa el almacenamiento en memoria vacío.
      */
     public RepositorioPrendas() {
-        this.prendasPorCodigo = new HashMap<>();
+        super();
+    }
+
+    /**
+     * Devuelve la clave única que identifica una prenda dentro del repositorio.
+     *
+     * @param prenda prenda de la que se extrae su clave.
+     * @return código único de la prenda.
+     */
+    @Override
+    protected String claveDe(Prenda prenda) {
+        return prenda.getCodigo();
     }
 
     /**
@@ -43,14 +45,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public boolean registrar(Prenda prenda) {
-        if (prenda == null || prenda.getCodigo() == null) {
-            return false;
-        }
-        if (prendasPorCodigo.containsKey(prenda.getCodigo())) {
-            return false;
-        }
-        prendasPorCodigo.put(prenda.getCodigo(), prenda);
-        return true;
+        return super.registrar(prenda);
     }
 
     /**
@@ -62,17 +57,10 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public boolean actualizar(Prenda prenda) {
-        if (prenda == null || prenda.getCodigo() == null) {
-            return false;
-        }
-        if (!prendasPorCodigo.containsKey(prenda.getCodigo())) {
-            return false;
-        }
-        prendasPorCodigo.put(prenda.getCodigo(), prenda);
-        return true;
+        return super.actualizar(prenda);
     }
 
-/**
+    /**
      * Elimina la prenda cuyo código se indica.
      *
      * @param codigo código único de la prenda que se desea eliminar.
@@ -80,10 +68,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public boolean eliminar(String codigo) {
-        if (codigo == null) {
-            return false;
-        }
-        return prendasPorCodigo.remove(codigo) != null;
+        return super.eliminar(codigo);
     }
 
     /**
@@ -94,10 +79,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public Prenda buscarPorCodigo(String codigo) {
-        if (codigo == null) {
-            return null;
-        }
-        return prendasPorCodigo.get(codigo);
+        return super.buscar(codigo);
     }
 
     /**
@@ -107,12 +89,10 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public List<Prenda> obtenerTodas() {
-        List<Prenda> resultado = new ArrayList<>(prendasPorCodigo.values());
-        resultado.sort(Comparator.comparing(Prenda::getCodigo));
-        return Collections.unmodifiableList(resultado);
+        return super.obtenerTodos();
     }
 
-/**
+    /**
      * Filtra las prendas que coincidan con el tipo indicado.
      *
      * @param tipo criterio de filtrado por tipo de prenda.
@@ -120,9 +100,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public List<Prenda> filtrarPorTipo(TipoPrenda tipo) {
-        return prendasPorCodigo.values().stream()
-                .filter(prenda -> prenda.getTipo() == tipo)
-                .collect(Collectors.toCollection(ArrayList::new));
+        return filtrar(prenda -> prenda.getTipo() == tipo);
     }
 
     /**
@@ -133,9 +111,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public List<Prenda> filtrarPorTalla(Talla talla) {
-        return prendasPorCodigo.values().stream()
-                .filter(prenda -> prenda.getTalla() == talla)
-                .collect(Collectors.toCollection(ArrayList::new));
+        return filtrar(prenda -> prenda.getTalla() == talla);
     }
 
     /**
@@ -146,9 +122,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public List<Prenda> filtrarPorEstado(EstadoPrenda estado) {
-        return prendasPorCodigo.values().stream()
-                .filter(prenda -> prenda.getEstado() == estado)
-                .collect(Collectors.toCollection(ArrayList::new));
+        return filtrar(prenda -> prenda.getEstado() == estado);
     }
 
     /**
@@ -160,9 +134,7 @@ public class RepositorioPrendas implements IGestionPrendas {
      */
     @Override
     public List<Prenda> filtrarPorPrecio(double precioMinimo, double precioMaximo) {
-        return prendasPorCodigo.values().stream()
-                .filter(prenda -> prenda.getPrecio() >= precioMinimo && prenda.getPrecio() <= precioMaximo)
-                .collect(Collectors.toCollection(ArrayList::new));
+        return filtrar(prenda -> prenda.getPrecio() >= precioMinimo && prenda.getPrecio() <= precioMaximo);
     }
 
     /**
@@ -178,10 +150,7 @@ public class RepositorioPrendas implements IGestionPrendas {
             return obtenerTodas();
         }
         String normalizado = texto.trim().toLowerCase();
-        return prendasPorCodigo.values().stream()
-                .filter(prenda -> coincideConTexto(prenda, normalizado))
-                .sorted(Comparator.comparing(Prenda::getCodigo))
-                .collect(Collectors.toCollection(ArrayList::new));
+        return filtrar(prenda -> coincideConTexto(prenda, normalizado));
     }
 
     /**
