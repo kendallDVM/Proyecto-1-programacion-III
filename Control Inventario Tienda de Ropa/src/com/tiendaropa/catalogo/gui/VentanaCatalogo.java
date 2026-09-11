@@ -7,8 +7,6 @@ import com.tiendaropa.catalogo.modelo.TipoPrenda;
 import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
 
 import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import java.awt.BorderLayout;
 
 /**
@@ -89,20 +87,4 @@ public class VentanaCatalogo extends JFrame {
             repositorio.registrar(prenda);
         }
     }
-
-    /**
-     * Punto de entrada de la aplicación. Lanza la ventana en el hilo de eventos.
-     *
-     * @param args argumentos de línea de comandos (no utilizados).
-     */
-    /*public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception excepcion) {
-                // Se mantiene el look and feel por defecto si falla el cambio.
-            }
-            new VentanaCatalogo().setVisible(true);
-        });
-    }*/
 }

@@ -114,7 +114,6 @@ public class ServicioBusqueda implements IBuscador {
                                        double precioMin, double precioMax) {
         // Obtiene todas las prendas
         List<Prenda> resultado = gestionPrendas.obtenerTodas();
-        System.out.println("DEBUG ServicioBusqueda: obtenerTodas() retornó " + resultado.size() + " prendas");  // ← AGREGA ESTO
 
         // Filtro 1: Por tipo (si se especifica)
         // Verifica si el usuario especificó un tipo de prenda

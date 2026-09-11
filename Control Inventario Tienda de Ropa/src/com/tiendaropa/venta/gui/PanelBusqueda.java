@@ -3,6 +3,8 @@ package com.tiendaropa.venta.gui;
 
 
 import com.tiendaropa.venta.servicio.ServicioBusqueda;
+import com.tiendaropa.catalogo.modelo.TipoPrenda;
+import com.tiendaropa.catalogo.modelo.Talla;
 import javax.swing.*;
 import java.awt.*;
 
@@ -23,8 +25,8 @@ public class PanelBusqueda extends JPanel {
     private VentanaCarrito ventanaCarrito;      // Referencia a ventana principal
 
     // Componentes de búsqueda
-    private JComboBox<String> cmbTipo;          // ComboBox para tipo de prenda
-    private JComboBox<String> cmbTalla;         // ComboBox para talla
+    private JComboBox<TipoPrenda> cmbTipo;      // ComboBox para tipo de prenda
+    private JComboBox<Talla> cmbTalla;          // ComboBox para talla
     private JTextField txtPrecioMin;            // Campo precio mínimo
     private JTextField txtPrecioMax;            // Campo precio máximo
     private JButton btnBuscar;                  // Botón para buscar
@@ -76,30 +78,18 @@ public class PanelBusqueda extends JPanel {
         // TIPO DE PRENDA
         JLabel lblTipo = new JLabel("Tipo:");
         cmbTipo = new JComboBox<>();
-        cmbTipo.addItem("");  // Opción vacía (sin filtro)
-        cmbTipo.addItem("CAMISETA");
-        cmbTipo.addItem("CAMISA");
-        cmbTipo.addItem("PANTALON");
-        cmbTipo.addItem("VESTIDO");
-        cmbTipo.addItem("FALDA");
-        cmbTipo.addItem("CHAQUETA");
-        cmbTipo.addItem("ABRIGO");
-        cmbTipo.addItem("SUETER");
-        cmbTipo.addItem("BUZO");
-        cmbTipo.addItem("ZAPATOS");
-        cmbTipo.addItem("ACCESORIO");
+        cmbTipo.addItem(null);
+        for (TipoPrenda tipo : TipoPrenda.values()) {
+            cmbTipo.addItem(tipo);
+        }
 
         // TALLA
         JLabel lblTalla = new JLabel("Talla:");
         cmbTalla = new JComboBox<>();
-        cmbTalla.addItem("");  // Opción vacía (sin filtro)
-        cmbTalla.addItem("XS");
-        cmbTalla.addItem("S");
-        cmbTalla.addItem("M");
-        cmbTalla.addItem("L");
-        cmbTalla.addItem("XL");
-        cmbTalla.addItem("XXL");
-        cmbTalla.addItem("UNICA");
+        cmbTalla.addItem(null);
+        for (Talla talla : Talla.values()) {
+            cmbTalla.addItem(talla);
+        }
 
         // PRECIO MÍNIMO
         JLabel lblPrecioMin = new JLabel("Precio Min (¢):");
@@ -150,10 +140,8 @@ public class PanelBusqueda extends JPanel {
     private void buscar() {
 
         // Obtener valores de los filtros
-        String tipo = (String) cmbTipo.getSelectedItem();
-        String talla = (String) cmbTalla.getSelectedItem();
-
-        System.out.println("DEBUG: Buscando - Tipo: " + tipo + ", Talla: " + talla);  // ← AGREGA ESTO
+        String tipo = getTipo();
+        String talla = getTalla();
 
         // Obtener precios (convertir de String a double)
         double precioMin = 0;
@@ -186,14 +174,14 @@ public class PanelBusqueda extends JPanel {
 
     // Retorna el tipo de prenda seleccionado.
     public String getTipo() {
-        String tipo = (String) cmbTipo.getSelectedItem();
-        return (tipo != null && !tipo.isEmpty()) ? tipo : null;
+        TipoPrenda tipo = (TipoPrenda) cmbTipo.getSelectedItem();
+        return (tipo != null) ? tipo.name() : null;
     }
 
      //Retorna la talla seleccionada.
     public String getTalla() {
-        String talla = (String) cmbTalla.getSelectedItem();
-        return (talla != null && !talla.isEmpty()) ? talla : null;
+        Talla talla = (Talla) cmbTalla.getSelectedItem();
+        return (talla != null) ? talla.name() : null;
     }
 
 
@@ -220,7 +208,7 @@ public class PanelBusqueda extends JPanel {
     //Retorna el servicio de búsqueda.
     //Se usa para que PanelDisponibles acceda a él.
 
-    public com.tiendaropa.venta.servicio.ServicioBusqueda getServicioBusqueda() {
+    public ServicioBusqueda getServicioBusqueda() {
         return servicioBusqueda;
     }
 

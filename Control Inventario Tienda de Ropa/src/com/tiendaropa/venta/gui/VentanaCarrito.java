@@ -37,24 +37,6 @@ public class VentanaCarrito extends JFrame {
         this.carrito = new Carrito();
         this.servicioBusqueda = new ServicioBusqueda(gestionPrendas);
 
-        /** DEBUG
-        System.out.println("\n=== VENTANA CARRITO ABIERTA ===");
-        java.util.List<com.tiendaropa.catalogo.modelo.Prenda> todasLasPrendas = gestionPrendas.obtenerTodas();
-        System.out.println("Prendas disponibles en Módulo 1: " + todasLasPrendas.size());
-        for (com.tiendaropa.catalogo.modelo.Prenda p : todasLasPrendas) {
-            System.out.println("  - " + p.getCodigo() + ": " + p.getTipo() + ", Talla: " + p.getTalla() + ", Precio: " + p.getPrecio());}
-        System.out.println("===================================\n");
-        */
-
-        // DEBUG CRÍTICO
-        System.out.println("\n=== VERIFICANDO CONEXIÓN ===");
-        java.util.List<com.tiendaropa.catalogo.modelo.Prenda> prendas = gestionPrendas.obtenerTodas();
-        System.out.println("Prendas en RepositorioPrendas: " + prendas.size());
-        for (com.tiendaropa.catalogo.modelo.Prenda p : prendas) {
-            System.out.println("  ✓ " + p.getCodigo() + ": " + p.getTipo());
-        }
-        System.out.println("===============================\n");
-
 
 
 
@@ -141,17 +123,5 @@ public class VentanaCarrito extends JFrame {
     public void actualizarCarrito() {
         panelCarrito.recargar();
     }
-
-
-    // ========== MÉTODO MAIN (para testing) ==========
-
-    /**
-     * Punto de entrada para testing (se reemplazará con Main2.java después).
-     */
-    public static void main(String[] args) {
-        // Por ahora, solo para verificar que compila
-        // Esto se reemplazará con Main2.java que inyecta las dependencias reales
-    }
-
 
 }

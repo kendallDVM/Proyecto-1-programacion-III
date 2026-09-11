@@ -4,6 +4,7 @@ package com.tiendaropa.venta.gui;
 import com.tiendaropa.catalogo.modelo.Prenda;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
+import com.tiendaropa.venta.servicio.ServicioBusqueda;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -141,15 +142,12 @@ public class PanelDisponibles extends JPanel{
      */
 
     public void recargar() {
-        System.out.println("DEBUG: recargar() llamado");
         modeloTabla.setRowCount(0);
 
         // Verificar que panelBusqueda está conectado
         if (panelBusqueda == null) {
-            System.out.println("DEBUG: ERROR - panelBusqueda es NULL");
             return;
         }
-        System.out.println("DEBUG: panelBusqueda OK");
 
         // Obtener filtros del panel de búsqueda
         String tipo = panelBusqueda.getTipo();
@@ -157,27 +155,18 @@ public class PanelDisponibles extends JPanel{
         double precioMin = panelBusqueda.getPrecioMin();
         double precioMax = panelBusqueda.getPrecioMax();
 
-        System.out.println("DEBUG: Filtros - Tipo: " + tipo + ", Talla: " + talla + ", Min: " + precioMin + ", Max: " + precioMax);
-
         // Obtener servicio de búsqueda
-        com.tiendaropa.venta.servicio.ServicioBusqueda servicio =
-                panelBusqueda.getServicioBusqueda();
+        ServicioBusqueda servicio = panelBusqueda.getServicioBusqueda();
 
         if (servicio == null) {
-            System.out.println("DEBUG: ERROR - servicio es NULL");
             return;
         }
-        System.out.println("DEBUG: servicio OK");
 
         // Realizar búsqueda con los filtros
-        java.util.List<com.tiendaropa.catalogo.modelo.Prenda> prendas =
-                servicio.buscarAvanzado(tipo, talla, precioMin, precioMax);
-
-        System.out.println("DEBUG: Búsqueda retornó " + prendas.size() + " prendas");
+        List<Prenda> prendas = servicio.buscarAvanzado(tipo, talla, precioMin, precioMax);
 
         // Agregar cada prenda a la tabla
-        for (com.tiendaropa.catalogo.modelo.Prenda prenda : prendas) {
-            System.out.println("DEBUG: Agregando prenda: " + prenda.getCodigo());
+        for (Prenda prenda : prendas) {
             agregarFilaPrenda(prenda);
         }
     }
