@@ -5,7 +5,7 @@ package com.tiendaropa.venta.modelo;
 /**
  * Enum que representa los estados posibles del carrito durante su ciclo de vida.
  *
- * @author [Liseth Briones]
+ * @author Liseth Briones
  */
 
 

@@ -58,6 +58,9 @@ public class VentanaCarrito extends JFrame {
 
         // Organizar los paneles en la ventana
         organizarLayout();
+
+        // Cargar las prendas disponibles al abrir la ventana
+        actualizarDisponibles();
     }
 
 

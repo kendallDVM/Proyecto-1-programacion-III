@@ -49,9 +49,6 @@ public class PanelBusqueda extends JPanel {
 
         // Crear componentes
         crearComponentes();
-
-        // Organizar componentes en el panel
-        organizarComponentes();
     }
 
 
@@ -119,17 +116,6 @@ public class PanelBusqueda extends JPanel {
         add(lblPrecioMax);
         add(txtPrecioMax);
         add(btnBuscar);
-    }
-
-    // ========== ORGANIZACIÓN DE COMPONENTES ==========
-
-    /**
-     * Los componentes ya están organizados en crearComponentes(),
-     * así que este método solo es un placeholder por ahora.
-     */
-    private void organizarComponentes() {
-        // Los componentes ya fueron agregados en crearComponentes()
-        // usando el FlowLayout del panel
     }
 
     // ========== LÓGICA DE BÚSQUEDA ==========

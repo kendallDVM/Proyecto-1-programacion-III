@@ -8,6 +8,7 @@ import com.tiendaropa.venta.servicio.ServicioBusqueda;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -17,7 +18,7 @@ import java.util.List;
  * Obtiene las prendas del servicio de búsqueda según los filtros.
  * Permite seleccionar y agregar prendas al carrito.
  ------------------------
- *author Liseth Briones
+ * @author Liseth Briones
  */
 public class PanelDisponibles extends JPanel{
 
@@ -30,6 +31,9 @@ public class PanelDisponibles extends JPanel{
     private JTable tblPrendas;                  // Tabla de prendas
     private DefaultTableModel modeloTabla;      // Modelo de datos de la tabla
     private JButton btnAgregar;                 // Botón para agregar al carrito
+
+    /** Lista de prendas mostradas actualmente, en orden de las filas. */
+    private List<Prenda> prendasActuales = new ArrayList<>();
 
 
 
@@ -143,6 +147,7 @@ public class PanelDisponibles extends JPanel{
 
     public void recargar() {
         modeloTabla.setRowCount(0);
+        prendasActuales.clear();
 
         // Verificar que panelBusqueda está conectado
         if (panelBusqueda == null) {
@@ -163,10 +168,10 @@ public class PanelDisponibles extends JPanel{
         }
 
         // Realizar búsqueda con los filtros
-        List<Prenda> prendas = servicio.buscarAvanzado(tipo, talla, precioMin, precioMax);
+        prendasActuales = servicio.buscarAvanzado(tipo, talla, precioMin, precioMax);
 
         // Agregar cada prenda a la tabla
-        for (Prenda prenda : prendas) {
+        for (Prenda prenda : prendasActuales) {
             agregarFilaPrenda(prenda);
         }
     }
@@ -187,25 +192,17 @@ public class PanelDisponibles extends JPanel{
             return;
         }
 
-        // Obtener el código de la prenda seleccionada
-        String codigo = (String) modeloTabla.getValueAt(filaSeleccionada, 0);
-
-        // Buscar la prenda real en el repositorio mediante el servicio
-        Prenda prendaSeleccionada = panelBusqueda.getServicioBusqueda()
-                .obtenerDisponibles()
-                .stream()
-                .filter(prenda -> prenda.getCodigo().equals(codigo))
-                .findFirst()
-                .orElse(null);
-
-        // Verificar que la prenda exista
-        if (prendaSeleccionada == null) {
+        // Verificar que el índice sea válido en la lista de prendas actuales
+        if (filaSeleccionada < 0 || filaSeleccionada >= prendasActuales.size()) {
             JOptionPane.showMessageDialog(this,
-                    "No se encontró la prenda seleccionada",
+                    "La prenda seleccionada ya no está disponible",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
+
+        // Obtener la prenda real por su índice en la lista de prendas actuales
+        Prenda prendaSeleccionada = prendasActuales.get(filaSeleccionada);
 
         // Crear la línea del carrito
         LineaCarrito linea = new LineaCarrito(prendaSeleccionada);
@@ -215,7 +212,7 @@ public class PanelDisponibles extends JPanel{
 
         if (agregada) {
             JOptionPane.showMessageDialog(this,
-                    "Prenda agregada: " + codigo,
+                    "Prenda agregada: " + prendaSeleccionada.getCodigo(),
                     "Éxito",
                     JOptionPane.INFORMATION_MESSAGE);
 
