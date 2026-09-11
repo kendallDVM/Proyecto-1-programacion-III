@@ -313,6 +313,7 @@ public class PanelCarrito extends JPanel {
             // Refrescar carrito y disponibles
             recargar();
             ventanaCarrito.actualizarDisponibles();
+            ventanaCarrito.actualizarReportes();
 
         } catch (IllegalStateException excepcion) {
             JOptionPane.showMessageDialog(this,

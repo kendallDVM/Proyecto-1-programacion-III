@@ -28,6 +28,7 @@ public class VentanaCarrito extends JFrame {
     private PanelBusqueda panelBusqueda;      // Panel de búsqueda
     private PanelDisponibles panelDisponibles; // Panel de prendas disponibles
     private PanelCarrito panelCarrito;        // Panel del carrito
+    private PanelReportes panelReportes;      // Panel de reportes de ventas
 
     /** Contador secuencial para generar códigos de factura únicos. */
     private int contadorFactura = 1;
@@ -96,6 +97,8 @@ public class VentanaCarrito extends JFrame {
         panelDisponibles.setPanelBusqueda(panelBusqueda);  // ← AGREGA ESTA LÍNEA
 
         panelCarrito = new PanelCarrito(carrito, this, gestionVentas);
+
+        panelReportes = new PanelReportes(gestionVentas);
     }
 
     // ========== ORGANIZACIÓN DEL LAYOUT ==========
@@ -113,6 +116,9 @@ public class VentanaCarrito extends JFrame {
         panelCentral.add(panelDisponibles);
         panelCentral.add(panelCarrito);
         add(panelCentral, java.awt.BorderLayout.CENTER);
+
+        // Panel de reportes en la parte inferior (South)
+        add(panelReportes, java.awt.BorderLayout.SOUTH);
     }
 
     // ========== MÉTODOS DE ACTUALIZACIÓN ==========
@@ -131,6 +137,14 @@ public class VentanaCarrito extends JFrame {
      */
     public void actualizarCarrito() {
         panelCarrito.recargar();
+    }
+
+    /**
+     * Actualiza el panel de reportes con el historial de ventas actual.
+     * Se llama tras confirmar una venta.
+     */
+    public void actualizarReportes() {
+        panelReportes.recargar();
     }
 
     /**
