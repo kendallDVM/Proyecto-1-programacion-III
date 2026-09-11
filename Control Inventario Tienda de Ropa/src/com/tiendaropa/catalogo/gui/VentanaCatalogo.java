@@ -1,13 +1,13 @@
 package com.tiendaropa.catalogo.gui;
 
-import com.tiendaropa.catalogo.modelo.EstadoPrenda;
 import com.tiendaropa.catalogo.modelo.Prenda;
-import com.tiendaropa.catalogo.modelo.Talla;
-import com.tiendaropa.catalogo.modelo.TipoPrenda;
 import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Ventana principal del catálogo de la tienda de ropa de segunda mano.
@@ -22,6 +22,9 @@ public class VentanaCatalogo extends JFrame {
     /** Repositorio único compartido por todos los paneles de la ventana. */
     private final RepositorioPrendas repositorio;
 
+    /** Acción para volver a la tienda al cerrar la administración. */
+    private final Runnable accionAlVolver;
+
     /** Panel de formulario para capturar y editar prendas. */
     private PanelFormulario panelFormulario;
 
@@ -31,18 +34,28 @@ public class VentanaCatalogo extends JFrame {
     /**
      * Construye la ventana principal, organiza los paneles y carga los datos.
      */
-    public VentanaCatalogo(RepositorioPrendas repositorio) {
+    public VentanaCatalogo(RepositorioPrendas repositorio, Runnable accionAlVolver) {
 
         this.repositorio = repositorio;
+        this.accionAlVolver = accionAlVolver;
 
-        setTitle("Catálogo - Tienda de Ropa de Segunda Mano");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Administración - Tienda de Ropa de Segunda Mano");
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(980, 540);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(8, 8));
 
         construirPaneles();
-        cargarDatosEjemplo();
+
+        // Si se cierra esta ventana (con la X), volver a la tienda
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent evento) {
+                if (accionAlVolver != null) {
+                    accionAlVolver.run();
+                }
+            }
+        });
     }
 
     /**
@@ -55,6 +68,10 @@ public class VentanaCatalogo extends JFrame {
         add(panelFormulario, BorderLayout.WEST);
         add(panelTabla, BorderLayout.CENTER);
 
+        JButton botonVolver = new JButton("Volver a la Tienda");
+        botonVolver.addActionListener(e -> volverATienda());
+        add(botonVolver, BorderLayout.SOUTH);
+
         panelTabla.getTabla().getSelectionModel().addListSelectionListener(evento -> {
             if (!evento.getValueIsAdjusting()) {
                 Prenda seleccionada = panelTabla.obtenerPrendaSeleccionada();
@@ -66,25 +83,12 @@ public class VentanaCatalogo extends JFrame {
     }
 
     /**
-     * Inserta unas prendas de ejemplo para que la tabla no esté vacía
-     * en el primer arranque y se pueda comprobar el funcionamiento.
+     * Cierra la administración y vuelve a mostrar la tienda.
      */
-    private void cargarDatosEjemplo() {
-        registrar(new Prenda("P-001", TipoPrenda.CAMISA, Talla.M, EstadoPrenda.BUEN_ESTADO, 12.50));
-        registrar(new Prenda("P-002", TipoPrenda.PANTALON, Talla.L, EstadoPrenda.COMO_NUEVO, 18.00));
-        registrar(new Prenda("P-003", TipoPrenda.VESTIDO, Talla.S, EstadoPrenda.ACEPTABLE, 14.75));
-        registrar(new Prenda("P-004", TipoPrenda.SUETER, Talla.XL, EstadoPrenda.BUEN_ESTADO, 16.20));
-        panelTabla.actualizarTabla();
-    }
-
-    /**
-     * Registra una prenda de ejemplo ignorando duplicados.
-     *
-     * @param prenda prenda de ejemplo que se desea cargar.
-     */
-    private void registrar(Prenda prenda) {
-        if (repositorio.buscarPorCodigo(prenda.getCodigo()) == null) {
-            repositorio.registrar(prenda);
+    private void volverATienda() {
+        dispose();
+        if (accionAlVolver != null) {
+            accionAlVolver.run();
         }
     }
 }

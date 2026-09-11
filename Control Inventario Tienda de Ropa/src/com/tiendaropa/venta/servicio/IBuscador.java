@@ -49,7 +49,7 @@ public interface IBuscador {
      * @param precioMax Precio máximo (0 para ignorar)
      * @return List<Prenda> que cumplen TODOS los criterios
      */
-    List<Prenda> buscarAvanzado(String tipo, String talla,
+    List<Prenda> buscarAvanzado(String tipo, String talla, String estado,
                                 double precioMin, double precioMax);
 
 

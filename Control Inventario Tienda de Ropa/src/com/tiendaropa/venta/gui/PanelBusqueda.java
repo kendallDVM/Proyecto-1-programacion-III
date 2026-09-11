@@ -5,6 +5,7 @@ package com.tiendaropa.venta.gui;
 import com.tiendaropa.venta.servicio.ServicioBusqueda;
 import com.tiendaropa.catalogo.modelo.TipoPrenda;
 import com.tiendaropa.catalogo.modelo.Talla;
+import com.tiendaropa.catalogo.modelo.EstadoPrenda;
 import javax.swing.*;
 import java.awt.*;
 
@@ -27,6 +28,7 @@ public class PanelBusqueda extends JPanel {
     // Componentes de búsqueda
     private JComboBox<TipoPrenda> cmbTipo;      // ComboBox para tipo de prenda
     private JComboBox<Talla> cmbTalla;          // ComboBox para talla
+    private JComboBox<EstadoPrenda> cmbEstado;  // ComboBox para estado de la prenda
     private JTextField txtPrecioMin;            // Campo precio mínimo
     private JTextField txtPrecioMax;            // Campo precio máximo
     private JButton btnBuscar;                  // Botón para buscar
@@ -82,6 +84,15 @@ public class PanelBusqueda extends JPanel {
         for (TipoPrenda tipo : TipoPrenda.values()) {
             cmbTipo.addItem(tipo);
         }
+        cmbTipo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? "Todos" : value.toString());
+                return this;
+            }
+        });
 
         // TALLA
         JLabel lblTalla = new JLabel("Talla:");
@@ -90,32 +101,64 @@ public class PanelBusqueda extends JPanel {
         for (Talla talla : Talla.values()) {
             cmbTalla.addItem(talla);
         }
+        cmbTalla.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? "Todas" : value.toString());
+                return this;
+            }
+        });
+
+        // ESTADO DE LA PRENDA
+        JLabel lblEstado = new JLabel("Estado:");
+        cmbEstado = new JComboBox<>();
+        cmbEstado.addItem(null);
+        for (EstadoPrenda estado : EstadoPrenda.values()) {
+            cmbEstado.addItem(estado);
+        }
+        cmbEstado.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? "Todos" : EstadoPrenda.descripcion((EstadoPrenda) value));
+                return this;
+            }
+        });
 
         // PRECIO MÍNIMO
         JLabel lblPrecioMin = new JLabel("Precio Min (¢):");
         txtPrecioMin = new JTextField(10);
-        txtPrecioMin.setText("0");
-
+        txtPrecioMin.setText("");
 
         // PRECIO MÁXIMO
         JLabel lblPrecioMax = new JLabel("Precio Max (¢):");
         txtPrecioMax = new JTextField(10);
-        txtPrecioMax.setText("0");
+        txtPrecioMax.setText("");
 
-        // BOTÓN BUSCAR
-        btnBuscar = new JButton("Buscar");
+        // BOTÓN FILTRAR
+        btnBuscar = new JButton("Filtrar");
         btnBuscar.addActionListener(e -> buscar());  // Listener para el botón
+
+        // BOTÓN LIMPIAR
+        JButton btnLimpiar = new JButton("Limpiar");
+        btnLimpiar.addActionListener(e -> limpiarFiltros());
 
         // Agregar componentes al panel
         add(lblTipo);
         add(cmbTipo);
         add(lblTalla);
         add(cmbTalla);
+        add(lblEstado);
+        add(cmbEstado);
         add(lblPrecioMin);
         add(txtPrecioMin);
         add(lblPrecioMax);
         add(txtPrecioMax);
         add(btnBuscar);
+        add(btnLimpiar);
     }
 
     // ========== LÓGICA DE BÚSQUEDA ==========
@@ -147,8 +190,8 @@ public class PanelBusqueda extends JPanel {
             return;
         }
 
-        // Actualizar panel de disponibles
-        ventanaCarrito.actualizarDisponibles();
+        // Actualizar panel de disponibles mostrando el resultado
+        ventanaCarrito.actualizarDisponiblesConMensaje();
     }
 
     // ========== GETTERS (para que otros paneles accedan a los filtros) ==========
@@ -171,6 +214,16 @@ public class PanelBusqueda extends JPanel {
     public String getTalla() {
         Talla talla = (Talla) cmbTalla.getSelectedItem();
         return (talla != null) ? talla.name() : null;
+    }
+
+    /**
+     * Devuelve el estado de prenda seleccionado en el filtro.
+     *
+     * @return nombre del estado, o {@code null} si no se seleccionó ninguno.
+     */
+    public String getEstado() {
+        EstadoPrenda estado = (EstadoPrenda) cmbEstado.getSelectedItem();
+        return (estado != null) ? estado.name() : null;
     }
 
     /**
@@ -208,6 +261,18 @@ public class PanelBusqueda extends JPanel {
      */
     public ServicioBusqueda getServicioBusqueda() {
         return servicioBusqueda;
+    }
+
+    /**
+     * Restablece todos los filtros y vuelve a mostrar todas las prendas.
+     */
+    private void limpiarFiltros() {
+        cmbTipo.setSelectedItem(null);
+        cmbTalla.setSelectedItem(null);
+        cmbEstado.setSelectedItem(null);
+        txtPrecioMin.setText("");
+        txtPrecioMax.setText("");
+        ventanaCarrito.actualizarDisponibles();
     }
 
 }

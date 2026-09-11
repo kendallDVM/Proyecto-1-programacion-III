@@ -110,7 +110,7 @@ public class ServicioBusqueda implements IBuscador {
 
 
     @Override
-    public List<Prenda> buscarAvanzado(String tipo, String talla,
+    public List<Prenda> buscarAvanzado(String tipo, String talla, String estado,
                                        double precioMin, double precioMax) {
         // Obtiene todas las prendas
         List<Prenda> resultado = gestionPrendas.obtenerTodas();
@@ -160,7 +160,20 @@ public class ServicioBusqueda implements IBuscador {
             }
         }
 
-        // Filtro 3: Por precio mínimo (si se especifica)
+        // Filtro 3: Por estado (si se especifica)
+        // Si estado es null o vacío (""), ignoramos este filtro
+        if (estado != null && !estado.isEmpty()) {
+            try {
+                EstadoPrenda estadoEnum = EstadoPrenda.valueOf(estado.toUpperCase());
+                resultado = resultado.stream()
+                        .filter(p -> p.getEstado() == estadoEnum)
+                        .collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+                return List.of();  // Estado inválido
+            }
+        }
+
+        // Filtro 4: Por precio mínimo (si se especifica)
         // Verifica si precioMin > 0 (significa que el usuario lo especificó)
         // Si precioMin = 0, ignoramos este filtro
         if (precioMin > 0) {
@@ -170,7 +183,7 @@ public class ServicioBusqueda implements IBuscador {
                     .collect(Collectors.toList());
         }
 
-        // Filtro 4: Por precio máximo (si se especifica)
+        // Filtro 5: Por precio máximo (si se especifica)
         // Verifica si precioMax > 0 (significa que el usuario lo especificó)
         // Si precioMax = 0, ignoramos este filtro
         if (precioMax > 0) {

@@ -154,10 +154,15 @@ public class PanelCarrito extends JPanel {
         JPanel panelInferior = new JPanel();
         panelInferior.setLayout(new BorderLayout());
 
-        // Panel izquierda: botones eliminar y finalizar
+        // Panel izquierda: botones eliminar, finalizar y volver al catálogo
         JPanel panelBotones = new JPanel();
         panelBotones.add(btnEliminar);
         panelBotones.add(btnFinalizar);
+
+        JButton btnAdmin = new JButton("Administrador");
+        btnAdmin.addActionListener(e -> ventanaCarrito.abrirAdministracion());
+        panelBotones.add(btnAdmin);
+
         panelInferior.add(panelBotones, BorderLayout.WEST);
 
         // Panel derecha: totales
