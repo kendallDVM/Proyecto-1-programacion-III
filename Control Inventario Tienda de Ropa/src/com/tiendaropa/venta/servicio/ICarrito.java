@@ -2,6 +2,7 @@ package com.tiendaropa.venta.servicio;
 
 
 import com.tiendaropa.venta.modelo.LineaCarrito;
+import com.tiendaropa.venta.modelo.Venta;
 import java.util.List;
 
 
@@ -54,6 +55,19 @@ public interface ICarrito {
 
     boolean estaVacio(); //Verifica si el carrito está vacío.
                         //@return boolean: true si no hay items
+
+
+    /**
+     * Convierte el contenido del carrito en una venta completada.
+     *
+     * <p>Genera una nueva {@link Venta} con las líneas actuales, marca el
+     * carrito como completado y lo deja vacío para una siguiente compra.</p>
+     *
+     * @param codigoFactura código único de factura asignado a la venta.
+     * @return la venta generada a partir del contenido del carrito.
+     * @throws IllegalStateException si el carrito está vacío.
+     */
+    Venta checkout(String codigoFactura);
 
 
 

@@ -108,5 +108,37 @@ public class Carrito implements ICarrito {
         return lineas.isEmpty();
     }
 
+    /**
+     * Convierte el contenido del carrito en una venta completada.
+     *
+     * <p>Crea una nueva {@link Venta} con las líneas actuales del carrito,
+     * marca el estado como {@link EstadoCarrito#COMPLETADO} y limpia las
+     * líneas para dejar el carrito listo para una siguiente compra.</p>
+     *
+     * @param codigoFactura código único de factura asignado a la venta.
+     * @return la venta generada a partir del contenido del carrito.
+     * @throws IllegalStateException si el carrito está vacío.
+     */
+    @Override
+    public Venta checkout(String codigoFactura) {
+        if (estaVacio()) {
+            throw new IllegalStateException("No se puede completar la venta: el carrito está vacío.");
+        }
+        estado = EstadoCarrito.PROCESANDO;
+        Venta venta = new Venta(codigoFactura, lineas);
+        estado = EstadoCarrito.COMPLETADO;
+        limpiar();
+        return venta;
+    }
+
+    /**
+     * Devuelve el estado actual del carrito durante su ciclo de vida.
+     *
+     * @return valor del enumerado {@link EstadoCarrito} que representa el estado.
+     */
+    public EstadoCarrito getEstado() {
+        return estado;
+    }
+
 
 }
