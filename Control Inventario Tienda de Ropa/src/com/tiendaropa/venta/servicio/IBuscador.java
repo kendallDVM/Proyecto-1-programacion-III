@@ -13,7 +13,7 @@ public interface IBuscador {
 
     /**
      * Obtiene todas las prendas disponibles del catálogo.
-     * @return List<Prenda> con todas las prendas disponibles
+     * @return {@code List<Prenda>} con todas las prendas disponibles.
      */
     List<Prenda> obtenerDisponibles();
 
@@ -21,14 +21,14 @@ public interface IBuscador {
      * Busca prendas disponibles según tipo.
      *
      * @param tipo Tipo de prenda (PANTALON, BLUSA, etc)
-     * @return List<Prenda> que coinciden con el tipo
+     * @return {@code List<Prenda>} que coinciden con el tipo.
      */
     List<Prenda> buscarPorTipo(String tipo);
 
     /**
      * Busca prendas disponibles según talla.
      * @param talla Talla (S, M, L, XL, etc)
-     * @return List<Prenda> que coinciden con la talla
+     * @return {@code List<Prenda>} que coinciden con la talla.
      */
     List<Prenda> buscarPorTalla(String talla);
 
@@ -36,7 +36,7 @@ public interface IBuscador {
      * Busca prendas disponibles en rango de precio.
      * @param precioMinimo Precio mínimo en colones
      * @param precioMaximo Precio máximo en colones
-     * @return List<Prenda> en ese rango
+     * @return {@code List<Prenda>} en ese rango.
      */
     List<Prenda> buscarPorPrecio(double precioMinimo, double precioMaximo);
 
@@ -47,7 +47,7 @@ public interface IBuscador {
      * @param talla Talla (puede ser null para ignorar)
      * @param precioMin Precio mínimo (0 para ignorar)
      * @param precioMax Precio máximo (0 para ignorar)
-     * @return List<Prenda> que cumplen TODOS los criterios
+     * @return {@code List<Prenda>} que cumplen TODOS los criterios.
      */
     List<Prenda> buscarAvanzado(String tipo, String talla,
                                 double precioMin, double precioMax);

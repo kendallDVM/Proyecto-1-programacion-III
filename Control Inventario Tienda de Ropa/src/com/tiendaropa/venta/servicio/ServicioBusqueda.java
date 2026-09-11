@@ -42,7 +42,7 @@ public class ServicioBusqueda implements IBuscador {
     /**
      * Obtiene todas las prendas disponibles del catálogo.
      *
-     * @return List<Prenda> con todas las prendas
+     * @return {@code List<Prenda>} con todas las prendas.
      */
     @Override
     public List<Prenda> obtenerDisponibles() {
@@ -54,7 +54,7 @@ public class ServicioBusqueda implements IBuscador {
      * Convierte el String a enum TipoPrenda.
      *
      * @param tipo Tipo de prenda como String
-     * @return List<Prenda> que coinciden con el tipo
+     * @return {@code List<Prenda>} que coinciden con el tipo.
      */
     @Override
     public List<Prenda> buscarPorTipo(String tipo) {
@@ -72,7 +72,7 @@ public class ServicioBusqueda implements IBuscador {
      * Convierte el String a enum Talla.
      *
      * @param talla Talla de prenda como String
-     * @return List<Prenda> que coinciden con la talla
+     * @return {@code List<Prenda>} que coinciden con la talla.
      */
     @Override
     public List<Prenda> buscarPorTalla(String talla) {
@@ -90,7 +90,7 @@ public class ServicioBusqueda implements IBuscador {
      *
      * @param precioMinimo Precio mínimo en colones
      * @param precioMaximo Precio máximo en colones
-     * @return List<Prenda> en ese rango
+     * @return {@code List<Prenda>} en ese rango.
      */
     @Override
     public List<Prenda> buscarPorPrecio(double precioMinimo, double precioMaximo) {
@@ -105,7 +105,7 @@ public class ServicioBusqueda implements IBuscador {
      * @param talla Talla (puede ser null)
      * @param precioMin Precio mínimo (0 para ignorar)
      * @param precioMax Precio máximo (0 para ignorar)
-     * @return List<Prenda> que cumplen TODOS los criterios
+     * @return {@code List<Prenda>} que cumplen TODOS los criterios.
      */
 
 
