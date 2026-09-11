@@ -2,6 +2,8 @@ package com.tiendaropa.venta.gui;
 
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
+import com.tiendaropa.venta.modelo.Venta;
+import com.tiendaropa.venta.repositorio.IGestionVentas;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -25,9 +27,12 @@ public class PanelCarrito extends JPanel {
     private Carrito carrito;                    // Referencia al carrito
     private VentanaCarrito ventanaCarrito;      // Referencia a ventana principal
 
+    private IGestionVentas gestionVentas;        // Historial de ventas
+
     private JTable tblCarrito;                  // Tabla del carrito
     private DefaultTableModel modeloTabla;      // Modelo de datos
     private JButton btnEliminar;                // Botón eliminar
+    private JButton btnFinalizar;               // Botón finalizar compra
 
     private JLabel lblSubtotal;                 // Etiqueta subtotal
     private JLabel lblIVA;                      // Etiqueta IVA (13%)
@@ -41,10 +46,13 @@ public class PanelCarrito extends JPanel {
      *
      * @param carrito Carrito del cliente
      * @param ventanaCarrito Referencia a ventana principal
+     * @param gestionVentas Historial de ventas
      */
-    public PanelCarrito(Carrito carrito, VentanaCarrito ventanaCarrito) {
+    public PanelCarrito(Carrito carrito, VentanaCarrito ventanaCarrito,
+                        IGestionVentas gestionVentas) {
         this.carrito = carrito;
         this.ventanaCarrito = ventanaCarrito;
+        this.gestionVentas = gestionVentas;
 
         // Configurar el panel
         configurarPanel();
@@ -82,6 +90,10 @@ public class PanelCarrito extends JPanel {
         // BOTÓN ELIMINAR
         btnEliminar = new JButton("Eliminar Seleccionado");
         btnEliminar.addActionListener(e -> eliminarDelCarrito());
+
+        // BOTÓN FINALIZAR COMPRA
+        btnFinalizar = new JButton("Finalizar Compra");
+        btnFinalizar.addActionListener(e -> finalizarCompra());
 
         // ETIQUETAS DE TOTALES
         lblSubtotal = new JLabel("Subtotal: ¢0");
@@ -139,9 +151,10 @@ public class PanelCarrito extends JPanel {
         JPanel panelInferior = new JPanel();
         panelInferior.setLayout(new BorderLayout());
 
-        // Panel izquierda: botón eliminar
+        // Panel izquierda: botones eliminar y finalizar
         JPanel panelBotones = new JPanel();
         panelBotones.add(btnEliminar);
+        panelBotones.add(btnFinalizar);
         panelInferior.add(panelBotones, BorderLayout.WEST);
 
         // Panel derecha: totales
@@ -250,6 +263,60 @@ public class PanelCarrito extends JPanel {
         } else {
             JOptionPane.showMessageDialog(this,
                     "No se pudo eliminar la prenda",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+    // ========== LÓGICA DE FINALIZAR COMPRA ==========
+
+    /**
+     * Procesa el checkout del carrito: valida que no esté vacío, genera la
+     * factura, registra la venta, retira las prendas vendidas del catálogo y
+     * refresca la interfaz.
+     */
+    private void finalizarCompra() {
+        // Validar que el carrito no esté vacío
+        if (carrito.estaVacio()) {
+            JOptionPane.showMessageDialog(this,
+                    "El carrito está vacío. Agregue prendas antes de finalizar.",
+                    "Advertencia",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            // Generar código de factura única
+            String codigoFactura = ventanaCarrito.generarCodigoFactura();
+
+            // Convertir el carrito en una venta (checkout) y limpiarlo
+            Venta venta = carrito.checkout(codigoFactura);
+
+            // Registrar la venta en el historial
+            gestionVentas.registrar(venta);
+
+            // Retirar permanentemente las prendas vendidas del catálogo
+            ventanaCarrito.retirarPrendasVendidas(venta);
+
+            // Mostrar resumen de la factura
+            String mensaje = String.format(
+                    "Venta completada.%n%nFactura: %s%nPrendas: %d%nSubtotal: ¢%,.2f%nIVA (13%%): ¢%,.2f%nTotal: ¢%,.2f",
+                    venta.getCodigoFactura(),
+                    venta.getCantidadPrendas(),
+                    venta.getSubtotal(),
+                    venta.getIva(),
+                    venta.getTotal());
+            JOptionPane.showMessageDialog(this, mensaje, "Venta exitosa",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Refrescar carrito y disponibles
+            recargar();
+            ventanaCarrito.actualizarDisponibles();
+
+        } catch (IllegalStateException excepcion) {
+            JOptionPane.showMessageDialog(this,
+                    excepcion.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
