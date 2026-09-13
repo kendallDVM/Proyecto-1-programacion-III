@@ -44,13 +44,6 @@ public interface ICarrito {
     double calcularSubtotal();
 
     /**
-     * Devuelve la cantidad de items (líneas) que hay en el carrito.
-     *
-     * @return número de líneas del carrito.
-     */
-    int obtenerCantidadItems();
-
-    /**
      * Devuelve las líneas del carrito.
      *
      * @return copia de la lista de líneas del carrito (no la referencia

@@ -50,55 +50,6 @@ public class ServicioBusqueda implements IBuscador {
     }
 
     /**
-     * Busca prendas por tipo.
-     * Convierte el String a enum TipoPrenda.
-     *
-     * @param tipo Tipo de prenda como String
-     * @return {@code List<Prenda>} que coinciden con el tipo.
-     */
-    @Override
-    public List<Prenda> buscarPorTipo(String tipo) {
-        try {
-            TipoPrenda tipoPrenda = TipoPrenda.valueOf(tipo.toUpperCase());
-            return gestionPrendas.filtrarPorTipo(tipoPrenda);
-        } catch (IllegalArgumentException e) {
-            return List.of();  // Si tipo inválido, retorna lista vacía
-        }
-    }
-
-
-    /**
-     * Busca prendas por talla.
-     * Convierte el String a enum Talla.
-     *
-     * @param talla Talla de prenda como String
-     * @return {@code List<Prenda>} que coinciden con la talla.
-     */
-    @Override
-    public List<Prenda> buscarPorTalla(String talla) {
-        try {
-            Talla tallaEnum = Talla.valueOf(talla.toUpperCase());
-            return gestionPrendas.filtrarPorTalla(tallaEnum);
-        } catch (IllegalArgumentException e) {
-            return List.of();  // Si talla inválida, retorna lista vacía
-        }
-    }
-
-
-    /**
-     * Busca prendas en rango de precio.
-     *
-     * @param precioMinimo Precio mínimo en colones
-     * @param precioMaximo Precio máximo en colones
-     * @return {@code List<Prenda>} en ese rango.
-     */
-    @Override
-    public List<Prenda> buscarPorPrecio(double precioMinimo, double precioMaximo) {
-        return gestionPrendas.filtrarPorPrecio(precioMinimo, precioMaximo);
-    }
-
-
-    /**
      * Busca prendas con múltiples criterios simultáneamente.
      *
      * @param tipo Tipo de prenda (puede ser null)

@@ -41,14 +41,4 @@ public enum TipoPrenda {
 
     /** Comprobante como bufandas, gorros o correas. */
     ACCESORIO;
-
-    /**
-     * Devuelve una representación textual en minúsculas del tipo de prenda.
-     *
-     * @param tipo valor del enumerado cuyo nombre se desea formatear.
-     * @return nombre del tipo de prenda en minúsculas.
-     */
-    public static String mostrarEnMinusculas(TipoPrenda tipo) {
-        return tipo == null ? "" : tipo.name().toLowerCase();
-    }
 }
