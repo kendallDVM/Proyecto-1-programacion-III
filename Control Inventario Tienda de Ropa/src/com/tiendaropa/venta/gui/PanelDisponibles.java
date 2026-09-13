@@ -267,15 +267,6 @@ public class PanelDisponibles extends JPanel{
     // ========== GETTERS ==========
 
     /**
-     * Devuelve el índice de la fila seleccionada en la tabla de prendas.
-     *
-     * @return índice de la fila seleccionada, o {@code -1} si no hay selección.
-     */
-    public int getPrendaSeleccionada() {
-        return tblPrendas.getSelectedRow();
-    }
-
-    /**
      * Establece el panel de búsqueda del que se obtienen los filtros.
      *
      * @param panelBusqueda panel de búsqueda a asociar.

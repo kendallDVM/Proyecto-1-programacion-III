@@ -150,14 +150,4 @@ public class Carrito implements ICarrito {
         return venta;
     }
 
-    /**
-     * Devuelve el estado actual del carrito durante su ciclo de vida.
-     *
-     * @return valor del enumerado {@link EstadoCarrito} que representa el estado.
-     */
-    public EstadoCarrito getEstado() {
-        return estado;
-    }
-
-
 }

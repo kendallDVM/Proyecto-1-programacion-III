@@ -330,26 +330,4 @@ public class PanelCarrito extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
-
-    // ========== GETTERS ==========
-
-    /**
-     * Devuelve el total a pagar del carrito (subtotal más IVA).
-     *
-     * @return total a pagar en colones.
-     */
-    public double getTotalAPagar() {
-        double subtotal = carrito.calcularSubtotal();
-        return subtotal * 1.13;
-    }
-
-    /**
-     * Devuelve la cantidad de items que hay en el carrito.
-     *
-     * @return número de líneas del carrito.
-     */
-    public int getCantidadItems() {
-        return carrito.obtenerCantidadItems();
-    }
 }
