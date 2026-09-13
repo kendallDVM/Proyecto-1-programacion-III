@@ -32,6 +32,9 @@ public class PanelDisponibles extends JPanel{
     private DefaultTableModel modeloTabla;      // Modelo de datos de la tabla
     private JButton btnAgregar;                 // Botón para agregar al carrito
 
+    /** Etiqueta que muestra el resultado de la búsqueda. */
+    private JLabel lblResultado;
+
     /** Lista de prendas mostradas actualmente, en orden de las filas. */
     private List<Prenda> prendasActuales = new ArrayList<>();
 
@@ -128,8 +131,13 @@ public class PanelDisponibles extends JPanel{
      * Organiza los componentes en el panel.
      */
     private void organizarComponentes() {
-        // Tabla en el centro (con scroll)
+        // Etiqueta del resultado de la búsqueda en la parte superior
+        lblResultado = new JLabel(" ");
+        add(lblResultado, BorderLayout.NORTH);
+
+        // Tabla en el centro (con scroll), aseguramos un alto mínimo
         JScrollPane scrollPane = new JScrollPane(tblPrendas);
+        scrollPane.setMinimumSize(new Dimension(0, 220));
         add(scrollPane, BorderLayout.CENTER);
 
         // Botón en la parte inferior
@@ -145,9 +153,8 @@ public class PanelDisponibles extends JPanel{
      * Se llama desde VentanaCarrito cuando presionan "Buscar".
      */
 
-    public void recargar() {
+    public void recargar(boolean conMensaje) {
         modeloTabla.setRowCount(0);
-        prendasActuales.clear();
 
         // Verificar que panelBusqueda está conectado
         if (panelBusqueda == null) {
@@ -157,6 +164,7 @@ public class PanelDisponibles extends JPanel{
         // Obtener filtros del panel de búsqueda
         String tipo = panelBusqueda.getTipo();
         String talla = panelBusqueda.getTalla();
+        String estado = panelBusqueda.getEstado();
         double precioMin = panelBusqueda.getPrecioMin();
         double precioMax = panelBusqueda.getPrecioMax();
 
@@ -168,7 +176,18 @@ public class PanelDisponibles extends JPanel{
         }
 
         // Realizar búsqueda con los filtros
-        prendasActuales = servicio.buscarAvanzado(tipo, talla, precioMin, precioMax);
+        prendasActuales = servicio.buscarAvanzado(tipo, talla, estado, precioMin, precioMax);
+
+        // Mostrar el resultado de la búsqueda solo cuando el usuario pulsa "Filtrar"
+        if (conMensaje) {
+            if (prendasActuales.isEmpty()) {
+                lblResultado.setText("No se encontraron prendas con los filtros seleccionados.");
+            } else {
+                lblResultado.setText("Búsqueda realizada: " + prendasActuales.size() + " prenda(s) encontrada(s).");
+            }
+        } else {
+            lblResultado.setText(" ");
+        }
 
         // Agregar cada prenda a la tabla
         for (Prenda prenda : prendasActuales) {

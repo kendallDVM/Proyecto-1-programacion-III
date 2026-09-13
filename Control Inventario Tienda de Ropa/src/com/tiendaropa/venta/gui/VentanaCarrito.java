@@ -1,11 +1,12 @@
 package com.tiendaropa.venta.gui;
 
 
-import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
+import com.tiendaropa.catalogo.gui.VentanaCatalogo;
+import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
 import com.tiendaropa.venta.modelo.Venta;
-import com.tiendaropa.venta.repositorio.IGestionVentas;
+import com.tiendaropa.venta.repositorio.RepositorioVentas;
 import com.tiendaropa.venta.servicio.ServicioBusqueda;
 import javax.swing.*;
 
@@ -20,10 +21,10 @@ import javax.swing.*;
  */
 public class VentanaCarrito extends JFrame {
 
-    private IGestionPrendas gestionPrendas;   // Conexión con Módulo 1
-    private IGestionVentas gestionVentas;     // Historial de ventas
-    private Carrito carrito;                  // Carrito del cliente
-    private ServicioBusqueda servicioBusqueda; // Servicio de búsqueda
+    private RepositorioPrendas gestionPrendas;   // Repositorio de prendas (compartido)
+    private RepositorioVentas gestionVentas;     // Repositorio de ventas (compartido)
+    private Carrito carrito;                     // Carrito del cliente
+    private ServicioBusqueda servicioBusqueda;   // Servicio de búsqueda
 
     private PanelBusqueda panelBusqueda;      // Panel de búsqueda
     private PanelDisponibles panelDisponibles; // Panel de prendas disponibles
@@ -35,17 +36,17 @@ public class VentanaCarrito extends JFrame {
 
 
     /**
-     * Crea la ventana principal con inyección de dependencias.
+     * Crea la ventana principal (tienda) con inyección de dependencias.
      *
-     * @param gestionPrendas Implementación de IGestionPrendas (del Módulo 1)
-     * @param gestionVentas  Implementación de IGestionVentas (historial)
+     * @param repositorioPrendas Repositorio de prendas (compartido con la administración).
+     * @param repositorioVentas  Repositorio de ventas (historial).
      */
-    public VentanaCarrito(IGestionPrendas gestionPrendas, IGestionVentas gestionVentas) {
+    public VentanaCarrito(RepositorioPrendas repositorioPrendas, RepositorioVentas repositorioVentas) {
 
-        this.gestionPrendas = gestionPrendas;
-        this.gestionVentas = gestionVentas;
+        this.gestionPrendas = repositorioPrendas;
+        this.gestionVentas = repositorioVentas;
         this.carrito = new Carrito();
-        this.servicioBusqueda = new ServicioBusqueda(gestionPrendas);
+        this.servicioBusqueda = new ServicioBusqueda(repositorioPrendas);
 
 
 
@@ -77,7 +78,7 @@ public class VentanaCarrito extends JFrame {
         // Centrar la ventana en la pantalla
         setLocationRelativeTo(null);
 
-        // Cerrar la aplicación cuando se cierra la ventana
+        // La tienda es la ventana principal: al cerrarla termina la aplicación
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Usar BorderLayout para organizar componentes
@@ -120,7 +121,8 @@ public class VentanaCarrito extends JFrame {
         panelCentral.add(panelCarrito);
         add(panelCentral, java.awt.BorderLayout.CENTER);
 
-        // Panel de reportes en la parte inferior (South)
+        // Panel de reportes en la parte inferior (South), con alto acotado
+        panelReportes.setPreferredSize(new java.awt.Dimension(0, 180));
         add(panelReportes, java.awt.BorderLayout.SOUTH);
     }
 
@@ -131,7 +133,15 @@ public class VentanaCarrito extends JFrame {
      * Se llama desde PanelBusqueda cuando el usuario hace clic en "Buscar".
      */
     public void actualizarDisponibles() {
-        panelDisponibles.recargar();
+        panelDisponibles.recargar(false);
+    }
+
+    /**
+     * Refresca las prendas disponibles mostrando el resultado de la búsqueda.
+     * Se usa cuando el usuario pulsa "Filtrar".
+     */
+    public void actualizarDisponiblesConMensaje() {
+        panelDisponibles.recargar(true);
     }
 
     /**
@@ -168,6 +178,56 @@ public class VentanaCarrito extends JFrame {
         for (LineaCarrito linea : venta.getLineas()) {
             gestionPrendas.eliminar(linea.getPrenda().getCodigo());
         }
+    }
+
+    /**
+     * Abre la administración (previa autenticación), ocultando la tienda.
+     */
+    public void abrirAdministracion() {
+        if (verificarCredenciales()) {
+            setVisible(false);
+            VentanaCatalogo ventanaAdmin = new VentanaCatalogo(gestionPrendas, this::mostrarTienda);
+            ventanaAdmin.setVisible(true);
+        }
+    }
+
+    /**
+     * Vuelve a mostrar la tienda y refresca las prendas disponibles.
+     */
+    private void mostrarTienda() {
+        setVisible(true);
+        actualizarDisponibles();
+    }
+
+    /**
+     * Autenticación demostrativa (no es un sistema de seguridad real).
+     *
+     * @return {@code true} si las credenciales admin/1234 son correctas.
+     */
+    private boolean verificarCredenciales() {
+        JPanel panel = new JPanel(new java.awt.GridLayout(2, 2, 8, 8));
+        JTextField campoUsuario = new JTextField(10);
+        JPasswordField campoPassword = new JPasswordField(10);
+        panel.add(new JLabel("Usuario:"));
+        panel.add(campoUsuario);
+        panel.add(new JLabel("Contraseña:"));
+        panel.add(campoPassword);
+
+        int opcion = JOptionPane.showConfirmDialog(this, panel, "Acceso de administrador",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (opcion != JOptionPane.OK_OPTION) {
+            return false;
+        }
+        String usuario = campoUsuario.getText();
+        String contrasena = new String(campoPassword.getPassword());
+        boolean valido = "admin".equals(usuario) && "1234".equals(contrasena);
+        if (!valido) {
+            JOptionPane.showMessageDialog(this,
+                    "Usuario o contraseña incorrectos.",
+                    "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+        }
+        return valido;
     }
 
 }
