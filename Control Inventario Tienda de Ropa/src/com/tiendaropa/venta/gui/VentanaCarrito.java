@@ -2,6 +2,7 @@ package com.tiendaropa.venta.gui;
 
 
 import com.tiendaropa.catalogo.gui.VentanaCatalogo;
+import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
@@ -21,7 +22,8 @@ import javax.swing.*;
  */
 public class VentanaCarrito extends JFrame {
 
-    private RepositorioPrendas gestionPrendas;   // Repositorio de prendas (compartido)
+    private IGestionPrendas gestionPrendas;   // Repositorio de prendas (contrato)
+    private RepositorioPrendas repositorioPrendas; // Repositorio concreto (para administración)
     private RepositorioVentas gestionVentas;     // Repositorio de ventas (compartido)
     private Carrito carrito;                     // Carrito del cliente
     private ServicioBusqueda servicioBusqueda;   // Servicio de búsqueda
@@ -44,6 +46,7 @@ public class VentanaCarrito extends JFrame {
     public VentanaCarrito(RepositorioPrendas repositorioPrendas, RepositorioVentas repositorioVentas) {
 
         this.gestionPrendas = repositorioPrendas;
+        this.repositorioPrendas = repositorioPrendas;
         this.gestionVentas = repositorioVentas;
         this.carrito = new Carrito();
         this.servicioBusqueda = new ServicioBusqueda(repositorioPrendas);
@@ -186,7 +189,7 @@ public class VentanaCarrito extends JFrame {
     public void abrirAdministracion() {
         if (verificarCredenciales()) {
             setVisible(false);
-            VentanaCatalogo ventanaAdmin = new VentanaCatalogo(gestionPrendas, this::mostrarTienda);
+            VentanaCatalogo ventanaAdmin = new VentanaCatalogo(repositorioPrendas, this::mostrarTienda);
             ventanaAdmin.setVisible(true);
         }
     }

@@ -103,6 +103,7 @@ public class ServicioBusqueda implements IBuscador {
      *
      * @param tipo Tipo de prenda (puede ser null)
      * @param talla Talla (puede ser null)
+     * @param estado Estado de la prenda (puede ser null)
      * @param precioMin Precio mínimo (0 para ignorar)
      * @param precioMax Precio máximo (0 para ignorar)
      * @return {@code List<Prenda>} que cumplen TODOS los criterios.

@@ -11,8 +11,9 @@ import java.util.List;
  */
 public interface IBuscador {
 
-    /**
+/**
      * Obtiene todas las prendas disponibles del catálogo.
+     *
      * @return {@code List<Prenda>} con todas las prendas disponibles.
      */
     List<Prenda> obtenerDisponibles();
@@ -27,6 +28,7 @@ public interface IBuscador {
 
     /**
      * Busca prendas disponibles según talla.
+     *
      * @param talla Talla (S, M, L, XL, etc)
      * @return {@code List<Prenda>} que coinciden con la talla.
      */
@@ -34,6 +36,7 @@ public interface IBuscador {
 
     /**
      * Busca prendas disponibles en rango de precio.
+     *
      * @param precioMinimo Precio mínimo en colones
      * @param precioMaximo Precio máximo en colones
      * @return {@code List<Prenda>} en ese rango.
@@ -45,6 +48,7 @@ public interface IBuscador {
      *
      * @param tipo Tipo de prenda (puede ser null para ignorar)
      * @param talla Talla (puede ser null para ignorar)
+     * @param estado Estado de la prenda (puede ser null para ignorar)
      * @param precioMin Precio mínimo (0 para ignorar)
      * @param precioMax Precio máximo (0 para ignorar)
      * @return {@code List<Prenda>} que cumplen TODOS los criterios.
