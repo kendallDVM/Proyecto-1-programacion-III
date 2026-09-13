@@ -33,6 +33,10 @@ public class VentanaCatalogo extends JFrame {
 
     /**
      * Construye la ventana principal, organiza los paneles y carga los datos.
+     *
+     * @param repositorio repositorio compartido de prendas que usarán los paneles.
+     * @param accionAlVolver acción que se ejecuta al cerrar la administración
+     *                       para volver a la tienda.
      */
     public VentanaCatalogo(RepositorioPrendas repositorio, Runnable accionAlVolver) {
 

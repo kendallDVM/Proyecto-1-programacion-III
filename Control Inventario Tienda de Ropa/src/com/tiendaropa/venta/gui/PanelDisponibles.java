@@ -151,8 +151,10 @@ public class PanelDisponibles extends JPanel{
     /**
      * Recarga la tabla con los resultados de la búsqueda.
      * Se llama desde VentanaCarrito cuando presionan "Buscar".
+     *
+     * @param conMensaje si es {@code true}, muestra un mensaje emergente
+     *                   indicando cuántas prendas coincidieron con la búsqueda.
      */
-
     public void recargar(boolean conMensaje) {
         modeloTabla.setRowCount(0);
 

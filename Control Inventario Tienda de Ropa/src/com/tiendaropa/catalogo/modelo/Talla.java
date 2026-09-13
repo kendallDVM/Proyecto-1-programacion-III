@@ -29,24 +29,4 @@ public enum Talla {
 
     /** Valor especial para prendas con talla libre o única. */
     UNICA;
-
-    /**
-     * Devuelve la talla correspondiente a un nombre ignorando mayúsculas
-     * o minúsculas.
-     *
-     * @param nombre nombre de la talla a buscar.
-     * @return la talla encontrada o {@code null} si no coincide con ninguna.
-     */
-    public static Talla desdeNombre(String nombre) {
-        if (nombre == null || nombre.isBlank()) {
-            return null;
-        }
-        String normalizado = nombre.trim().toUpperCase();
-        for (Talla taller : values()) {
-            if (taller.name().equals(normalizado)) {
-                return taller;
-            }
-        }
-        return null;
-    }
 }

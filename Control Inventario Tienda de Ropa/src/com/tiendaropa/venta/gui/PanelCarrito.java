@@ -204,6 +204,9 @@ public class PanelCarrito extends JPanel {
 
     /**
      * Agrega una fila a la tabla con datos de una línea del carrito.
+     *
+     * @param linea línea del carrito cuyos datos (código, tipo, talla y
+     *              subtotal) se mostrarán en la nueva fila.
      */
     private void agregarFilaCarrito(LineaCarrito linea) {
         Object[] fila = {
@@ -222,8 +225,8 @@ public class PanelCarrito extends JPanel {
         // Calcular subtotal
         double subtotal = carrito.calcularSubtotal();
 
-        // Calcular IVA (13%)
-        double iva = subtotal * 0.13;
+        // Calcular IVA usando la constante centralizada en Venta
+        double iva = subtotal * Venta.PORCENTAJE_IVA;
 
         // Calcular total
         double total = subtotal + iva;

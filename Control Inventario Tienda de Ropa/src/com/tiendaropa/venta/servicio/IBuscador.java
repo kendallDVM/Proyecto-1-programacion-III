@@ -19,31 +19,6 @@ public interface IBuscador {
     List<Prenda> obtenerDisponibles();
 
     /**
-     * Busca prendas disponibles según tipo.
-     *
-     * @param tipo Tipo de prenda (PANTALON, BLUSA, etc)
-     * @return {@code List<Prenda>} que coinciden con el tipo.
-     */
-    List<Prenda> buscarPorTipo(String tipo);
-
-    /**
-     * Busca prendas disponibles según talla.
-     *
-     * @param talla Talla (S, M, L, XL, etc)
-     * @return {@code List<Prenda>} que coinciden con la talla.
-     */
-    List<Prenda> buscarPorTalla(String talla);
-
-    /**
-     * Busca prendas disponibles en rango de precio.
-     *
-     * @param precioMinimo Precio mínimo en colones
-     * @param precioMaximo Precio máximo en colones
-     * @return {@code List<Prenda>} en ese rango.
-     */
-    List<Prenda> buscarPorPrecio(double precioMinimo, double precioMaximo);
-
-    /**
      * Busca prendas con múltiples criterios simultáneamente.
      *
      * @param tipo Tipo de prenda (puede ser null para ignorar)

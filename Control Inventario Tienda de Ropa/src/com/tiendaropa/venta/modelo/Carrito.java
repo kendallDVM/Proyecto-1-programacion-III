@@ -43,7 +43,7 @@ public class Carrito implements ICarrito {
      * @return true si se agregó exitosamente, false si ya estaba (duplicado)
      * @throws IllegalArgumentException si linea es nula
      */
-
+    @Override
     public boolean agregarLinea(LineaCarrito linea) {
         // Validación: linea no puede ser nula
         if (linea == null) {
@@ -59,6 +59,11 @@ public class Carrito implements ICarrito {
             return false;  // Prenda ya está en carrito, rechazar
         }
 
+        // Si venimos de una compra completada, el carrito vuelve a estar activo
+        if (estado == EstadoCarrito.COMPLETADO) {
+            estado = EstadoCarrito.ACTIVO;
+        }
+
         // Agregar la nueva línea
         lineas.add(linea);
         return true;  // Agregada exitosamente
@@ -70,6 +75,7 @@ public class Carrito implements ICarrito {
      * @param codigoPrenda código único de la prenda a eliminar.
      * @return {@code true} si se eliminó, {@code false} si no existía.
      */
+    @Override
     public boolean eliminarLinea(String codigoPrenda) {
         // Usa removeIf para eliminar la línea cuyo código coincida
         return lineas.removeIf(l -> l.getPrenda().getCodigo()
@@ -89,16 +95,6 @@ public class Carrito implements ICarrito {
     }
 
     /**
-     * Devuelve la cantidad de items (líneas) que hay en el carrito.
-     *
-     * @return número de líneas del carrito.
-     */
-    @Override
-    public int obtenerCantidadItems() {
-        return lineas.size();
-    }
-
-    /**
      * Devuelve las líneas del carrito.
      *
      * @return copia de la lista de líneas (no la referencia original).
@@ -109,7 +105,8 @@ public class Carrito implements ICarrito {
     }
 
     /**
-     * Vacía completamente el carrito y reinicia su estado a {@code ACTIVO}.
+     * Vacía completamente el carrito (cancela la compra en curso) y
+     * reinicia su estado a {@code ACTIVO}.
      */
     @Override
     public void limpiar() {
@@ -131,8 +128,10 @@ public class Carrito implements ICarrito {
      * Convierte el contenido del carrito en una venta completada.
      *
      * <p>Crea una nueva {@link Venta} con las líneas actuales del carrito,
-     * marca el estado como {@link EstadoCarrito#COMPLETADO} y limpia las
-     * líneas para dejar el carrito listo para una siguiente compra.</p>
+     * vacía las líneas y deja el carrito en estado
+     * {@link EstadoCarrito#COMPLETADO}. Al agregar una nueva línea, el
+     * carrito vuelve automáticamente a estado {@link EstadoCarrito#ACTIVO},
+     * quedando listo para una siguiente compra.</p>
      *
      * @param codigoFactura código único de factura asignado a la venta.
      * @return la venta generada a partir del contenido del carrito.
@@ -145,8 +144,8 @@ public class Carrito implements ICarrito {
         }
         estado = EstadoCarrito.PROCESANDO;
         Venta venta = new Venta(codigoFactura, lineas);
+        lineas.clear();
         estado = EstadoCarrito.COMPLETADO;
-        limpiar();
         return venta;
     }
 
