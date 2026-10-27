@@ -26,6 +26,9 @@ public class Prenda {
     /** Precio de venta de la prenda. Debe ser un valor positivo. */
     private double precio;
 
+    /** Indica si la prenda está disponible para la venta. */
+    private boolean disponible;
+
     /**
      * Constructor por defecto. No realiza inicialización de atributos y
      * deja los valores con sus características por defecto de Java.
@@ -35,6 +38,7 @@ public class Prenda {
 
     /**
      * Constructor que inicializa todos los atributos de la prenda.
+     * La prenda se crea como disponible por defecto.
      *
      * @param codigo código único de la prenda.
      * @param tipo   tipo o categoría de la prenda.
@@ -43,11 +47,27 @@ public class Prenda {
      * @param precio precio de venta de la prenda.
      */
     public Prenda(String codigo, TipoPrenda tipo, Talla talla, EstadoPrenda estado, double precio) {
+        this(codigo, tipo, talla, estado, precio, true);
+    }
+
+    /**
+     * Constructor que inicializa todos los atributos de la prenda
+     * incluyendo su disponibilidad.
+     *
+     * @param codigo      código único de la prenda.
+     * @param tipo        tipo o categoría de la prenda.
+     * @param talla       talla correspondiente a la prenda.
+     * @param estado      estado de conservación de la prenda.
+     * @param precio      precio de venta de la prenda.
+     * @param disponible  indica si la prenda está disponible para la venta.
+     */
+    public Prenda(String codigo, TipoPrenda tipo, Talla talla, EstadoPrenda estado, double precio, boolean disponible) {
         this.codigo = codigo;
         this.tipo = tipo;
         this.talla = talla;
         this.estado = estado;
         this.precio = precio;
+        this.disponible = disponible;
     }
 
     /**
@@ -141,6 +161,25 @@ public class Prenda {
     }
 
     /**
+     * Indica si la prenda está disponible para la venta.
+     *
+     * @return {@code true} si la prenda está disponible, {@code false} en caso contrario.
+     */
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    /**
+     * Establece la disponibilidad de la prenda.
+     *
+     * @param disponible {@code true} para marcar la prenda como disponible,
+     *                   {@code false} para marcarla como no disponible (vendida).
+     */
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
+    /**
      * Compara esta prenda con otro objeto para determinar si representa
      * el mismo artículo del catálogo.
      *
@@ -186,6 +225,7 @@ public class Prenda {
                 + ", talla=" + talla
                 + ", estado=" + estado
                 + ", precio=" + precio
+                + ", disponible=" + disponible
                 + '}';
     }
 }

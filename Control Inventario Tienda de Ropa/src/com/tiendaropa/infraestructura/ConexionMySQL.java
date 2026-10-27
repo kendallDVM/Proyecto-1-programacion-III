@@ -17,7 +17,7 @@ public final class ConexionMySQL {
     }
 
     public static Connection obtenerConexion() throws SQLException {
-        String contrasena = System.getenv("TIENDA_DB_PASSWORD");
+        String contrasena = "CAMBIAR_ANTES_DE_EJECUTAR";
 
         if (contrasena == null || contrasena.isBlank()) {
             throw new SQLException(

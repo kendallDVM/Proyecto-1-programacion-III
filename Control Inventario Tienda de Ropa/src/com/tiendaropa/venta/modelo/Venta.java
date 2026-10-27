@@ -51,8 +51,22 @@ public class Venta {
      * @param lineas        líneas (prendas) que conforman la venta.
      */
     public Venta(String codigoFactura, List<LineaCarrito> lineas) {
+        this(codigoFactura, LocalDateTime.now(), lineas);
+    }
+
+    /**
+     * Construye una venta a partir del código de factura, la fecha y las líneas vendidas.
+     *
+     * <p>Constructor utilizado para reconstruir una venta desde la base de datos,
+     * conservando la fecha original de la transacción.</p>
+     *
+     * @param codigoFactura código único de la factura.
+     * @param fecha         fecha y hora de la venta.
+     * @param lineas        líneas (prendas) que conforman la venta.
+     */
+    public Venta(String codigoFactura, LocalDateTime fecha, List<LineaCarrito> lineas) {
         this.codigoFactura = codigoFactura;
-        this.fecha = LocalDateTime.now();
+        this.fecha = fecha;
         this.lineas = lineas == null
                 ? new ArrayList<>()
                 : new ArrayList<>(lineas);
