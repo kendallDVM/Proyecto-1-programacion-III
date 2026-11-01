@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS Venta (
     total DECIMAL(10,2) NOT NULL,
 
     /* Cedula del cliente que realizo la compra.
-       NOT NULL obliga a asociar cada venta con un cliente. */
-    cliente_cedula VARCHAR(20) NOT NULL,
+       NULL permite registrar ventas sin cliente asociado. */
+    cliente_cedula VARCHAR(20) NULL,
 
     /* Relaciona la venta con un cliente registrado.
        La cedula debe existir previamente en la tabla Cliente. */
