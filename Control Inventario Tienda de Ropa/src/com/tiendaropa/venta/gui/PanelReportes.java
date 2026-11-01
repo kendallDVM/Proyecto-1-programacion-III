@@ -12,9 +12,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Panel que muestra el historial de ventas realizadas y permite buscar una
@@ -37,6 +39,15 @@ public class PanelReportes extends JPanel {
     /** Modelo de la tabla con las columnas del reporte. */
     private DefaultTableModel modelo;
 
+    /** Botón para buscar una venta por su código de factura. */
+    private JButton botonBuscar;
+
+    /** Botón para volver a mostrar todo el historial. */
+    private JButton botonVerTodas;
+
+    /** Número de la consulta más reciente; permite descartar resultados anteriores. */
+    private int cargaActual = 0;
+
     /**
      * Construye el panel, inicializa sus componentes y carga el historial.
      *
@@ -50,7 +61,7 @@ public class PanelReportes extends JPanel {
         add(construirBarraBusqueda(), BorderLayout.NORTH);
         add(construirTabla(), BorderLayout.CENTER);
 
-        actualizarTabla(gestionVentas.obtenerTodas());
+        cargarVentas("");
     }
 
     /**
@@ -65,18 +76,18 @@ public class PanelReportes extends JPanel {
         campoFactura.setToolTipText("Buscar venta por código de factura");
         campoFactura.addActionListener(evento -> buscarPorFactura());
 
-        JButton botonBuscar = new JButton("Buscar Factura");
+        botonBuscar = new JButton("Buscar Factura");
         botonBuscar.addActionListener(evento -> buscarPorFactura());
 
-        JButton botonLimpiar = new JButton("Ver Todas");
-        botonLimpiar.addActionListener(evento -> {
+        botonVerTodas = new JButton("Ver Todas");
+        botonVerTodas.addActionListener(evento -> {
             campoFactura.setText("");
-            actualizarTabla(gestionVentas.obtenerTodas());
+            cargarVentas("");
         });
 
         JPanel panelBotones = new JPanel();
         panelBotones.add(botonBuscar);
-        panelBotones.add(botonLimpiar);
+        panelBotones.add(botonVerTodas);
 
         barra.add(new JLabel("Código factura: "), BorderLayout.WEST);
         barra.add(campoFactura, BorderLayout.CENTER);
@@ -111,20 +122,64 @@ public class PanelReportes extends JPanel {
      * venta con ese código muestra un mensaje informativo.</p>
      */
     private void buscarPorFactura() {
-        String codigo = campoFactura.getText().trim();
-        if (codigo.isEmpty()) {
-            actualizarTabla(gestionVentas.obtenerTodas());
-            return;
-        }
-        Venta venta = gestionVentas.buscarPorFactura(codigo);
-        if (venta == null) {
-            JOptionPane.showMessageDialog(this,
-                    "No se encontró ninguna venta con la factura '" + codigo + "'.",
-                    "Reporte",
-                    JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        actualizarTabla(List.of(venta));
+        cargarVentas(campoFactura.getText().trim());
+    }
+
+    /**
+     * Consulta las ventas en segundo plano y las muestra en la tabla.
+     *
+     * <p>La consulta a la base de datos se ejecuta con un {@link SwingWorker}
+     * para no congelar la ventana; mientras tanto se deshabilitan los botones.
+     * Si el código está vacío se carga todo el historial. Si la base de datos
+     * falla, se informa el error sin cerrar la ventana.</p>
+     *
+     * @param codigo código de factura a buscar, o cadena vacía para ver todas.
+     */
+    private void cargarVentas(String codigo) {
+        int numeroCarga = ++cargaActual;
+        botonBuscar.setEnabled(false);
+        botonVerTodas.setEnabled(false);
+
+        new SwingWorker<List<Venta>, Void>() {
+            @Override
+            protected List<Venta> doInBackground() {
+                // Consulta a MySQL en un hilo de trabajo, fuera del hilo de Swing
+                if (codigo.isEmpty()) {
+                    return gestionVentas.obtenerTodas();
+                }
+                Venta venta = gestionVentas.buscarPorFactura(codigo);
+                return venta == null ? null : List.of(venta);
+            }
+
+            @Override
+            protected void done() {
+                // done() se ejecuta en el hilo de Swing: aquí sí se puede tocar la tabla
+                if (numeroCarga != cargaActual) {
+                    return; // Ya se pidió una consulta más reciente
+                }
+                botonBuscar.setEnabled(true);
+                botonVerTodas.setEnabled(true);
+                try {
+                    List<Venta> ventas = get();
+                    if (ventas == null) {
+                        JOptionPane.showMessageDialog(PanelReportes.this,
+                                "No se encontró ninguna venta con la factura '" + codigo + "'.",
+                                "Reporte",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+                    actualizarTabla(ventas);
+                } catch (InterruptedException excepcion) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException excepcion) {
+                    JOptionPane.showMessageDialog(PanelReportes.this,
+                            "No se pudo cargar el historial de ventas desde la base de datos.\n"
+                                    + "Verifique que MySQL esté disponible e intente de nuevo.",
+                            "Error de base de datos",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     /**
@@ -151,6 +206,6 @@ public class PanelReportes extends JPanel {
      * Debe invocarse tras confirmar una nueva venta.
      */
     public void recargar() {
-        actualizarTabla(gestionVentas.obtenerTodas());
+        cargarVentas("");
     }
 }
