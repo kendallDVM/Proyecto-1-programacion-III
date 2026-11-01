@@ -149,6 +149,16 @@ public class VentanaCarrito extends JFrame {
     }
 
     /**
+     * Indica si el carrito está registrando una venta en segundo plano.
+     * Se usa para impedir agregar prendas mientras tanto.
+     *
+     * @return {@code true} si hay una venta en curso.
+     */
+    public boolean hayVentaEnCurso() {
+        return panelCarrito.isVentaEnCurso();
+    }
+
+    /**
      * Actualiza el panel de reportes con el historial de ventas actual.
      * Se llama tras confirmar una venta.
      */

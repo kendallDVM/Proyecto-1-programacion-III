@@ -12,6 +12,7 @@ import com.tiendaropa.venta.repositorio.IGestionVentas;
 import com.tiendaropa.venta.repositorio.RepositorioVentasJDBC;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 /**
  * Punto de entrada principal de la aplicación de la tienda de ropa de segunda mano.
@@ -47,9 +48,11 @@ public class Main {
             return;
         }
 
-        // La tienda es la ventana principal
-        VentanaCarrito ventanaCarrito = new VentanaCarrito(repositorio, repositorioVentas);
-        ventanaCarrito.setVisible(true);
+        // La tienda es la ventana principal; se crea en el hilo de eventos de Swing
+        SwingUtilities.invokeLater(() -> {
+            VentanaCarrito ventanaCarrito = new VentanaCarrito(repositorio, repositorioVentas);
+            ventanaCarrito.setVisible(true);
+        });
     }
 
     /**

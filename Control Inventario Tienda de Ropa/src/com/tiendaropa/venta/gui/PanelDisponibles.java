@@ -10,6 +10,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -37,6 +38,9 @@ public class PanelDisponibles extends JPanel{
 
     /** Lista de prendas mostradas actualmente, en orden de las filas. */
     private List<Prenda> prendasActuales = new ArrayList<>();
+
+    /** Número de la carga más reciente; permite descartar resultados de búsquedas anteriores. */
+    private int cargaActual = 0;
 
 
 
@@ -152,23 +156,18 @@ public class PanelDisponibles extends JPanel{
      * Recarga la tabla con los resultados de la búsqueda.
      * Se llama desde VentanaCarrito cuando presionan "Buscar".
      *
+     * <p>La consulta a la base de datos se ejecuta en segundo plano con un
+     * {@link SwingWorker} para no congelar la ventana. Mientras tanto se
+     * muestra un mensaje de carga y se deshabilita el botón de agregar.</p>
+     *
      * @param conMensaje si es {@code true}, muestra un mensaje emergente
      *                   indicando cuántas prendas coincidieron con la búsqueda.
      */
     public void recargar(boolean conMensaje) {
-        modeloTabla.setRowCount(0);
-
         // Verificar que panelBusqueda está conectado
         if (panelBusqueda == null) {
             return;
         }
-
-        // Obtener filtros del panel de búsqueda
-        String tipo = panelBusqueda.getTipo();
-        String talla = panelBusqueda.getTalla();
-        String estado = panelBusqueda.getEstado();
-        double precioMin = panelBusqueda.getPrecioMin();
-        double precioMax = panelBusqueda.getPrecioMax();
 
         // Obtener servicio de búsqueda
         ServicioBusqueda servicio = panelBusqueda.getServicioBusqueda();
@@ -177,8 +176,52 @@ public class PanelDisponibles extends JPanel{
             return;
         }
 
-        // Realizar búsqueda con los filtros
-        prendasActuales = servicio.buscarAvanzado(tipo, talla, estado, precioMin, precioMax);
+        // Los filtros se leen aquí, en el hilo de Swing, antes de iniciar la consulta
+        String tipo = panelBusqueda.getTipo();
+        String talla = panelBusqueda.getTalla();
+        String estado = panelBusqueda.getEstado();
+        double precioMin = panelBusqueda.getPrecioMin();
+        double precioMax = panelBusqueda.getPrecioMax();
+
+        int numeroCarga = ++cargaActual;
+        modeloTabla.setRowCount(0);
+        prendasActuales = new ArrayList<>();
+        lblResultado.setText("Cargando prendas desde la base de datos...");
+        btnAgregar.setEnabled(false);
+
+        new SwingWorker<List<Prenda>, Void>() {
+            @Override
+            protected List<Prenda> doInBackground() {
+                // Consulta a MySQL en un hilo de trabajo, fuera del hilo de Swing
+                return servicio.buscarAvanzado(tipo, talla, estado, precioMin, precioMax);
+            }
+
+            @Override
+            protected void done() {
+                // done() se ejecuta en el hilo de Swing: aquí sí se puede tocar la tabla
+                if (numeroCarga != cargaActual) {
+                    return; // Ya se pidió una búsqueda más reciente
+                }
+                btnAgregar.setEnabled(true);
+                try {
+                    mostrarPrendas(get(), conMensaje);
+                } catch (InterruptedException excepcion) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException excepcion) {
+                    lblResultado.setText("No se pudieron cargar las prendas. Verifique que MySQL esté disponible.");
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Muestra en la tabla las prendas obtenidas de la búsqueda.
+     *
+     * @param prendas    prendas que cumplen los filtros.
+     * @param conMensaje si es {@code true}, indica cuántas prendas se encontraron.
+     */
+    private void mostrarPrendas(List<Prenda> prendas, boolean conMensaje) {
+        prendasActuales = prendas;
 
         // Mostrar el resultado de la búsqueda solo cuando el usuario pulsa "Filtrar"
         if (conMensaje) {
@@ -202,6 +245,15 @@ public class PanelDisponibles extends JPanel{
      * Agrega la prenda seleccionada al carrito.
      */
     private void agregarAlCarrito() {
+        // No modificar el carrito mientras se está registrando una venta
+        if (ventanaCarrito.hayVentaEnCurso()) {
+            JOptionPane.showMessageDialog(this,
+                    "Espere a que termine de registrarse la venta actual.",
+                    "Advertencia",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         // Verificar que hay una fila seleccionada
         int filaSeleccionada = tblPrendas.getSelectedRow();
 

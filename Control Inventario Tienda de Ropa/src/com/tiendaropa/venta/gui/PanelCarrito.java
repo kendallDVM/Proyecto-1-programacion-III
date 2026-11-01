@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -34,6 +35,10 @@ public class PanelCarrito extends JPanel {
     private DefaultTableModel modeloTabla;      // Modelo de datos
     private JButton btnEliminar;                // Botón eliminar
     private JButton btnFinalizar;               // Botón finalizar compra
+    private JButton btnAdmin;                   // Botón para abrir la administración
+
+    /** Indica si se está registrando una venta en segundo plano. */
+    private boolean ventaEnCurso = false;
 
     private JLabel lblSubtotal;                 // Etiqueta subtotal
     private JLabel lblIVA;                      // Etiqueta IVA (13%)
@@ -160,7 +165,7 @@ public class PanelCarrito extends JPanel {
         panelBotones.add(btnEliminar);
         panelBotones.add(btnFinalizar);
 
-        JButton btnAdmin = new JButton("Administrador");
+        btnAdmin = new JButton("Administrador");
         btnAdmin.addActionListener(e -> ventanaCarrito.abrirAdministracion());
         panelBotones.add(btnAdmin);
 
@@ -288,8 +293,10 @@ public class PanelCarrito extends JPanel {
      * factura, registra la venta y refresca la interfaz.
      *
      * <p>El repositorio guarda la venta, sus líneas y marca las prendas como
-     * vendidas en una sola transacción. Si el registro falla, las prendas
-     * vuelven al carrito para que el usuario pueda intentarlo de nuevo.</p>
+     * vendidas en una sola transacción. Esa operación se ejecuta en segundo
+     * plano con un {@link SwingWorker}; mientras tanto se deshabilitan los
+     * botones del carrito para evitar dobles clics. Si el registro falla, las
+     * prendas vuelven al carrito para que el usuario pueda intentarlo de nuevo.</p>
      */
     private void finalizarCompra() {
         // Validar que el carrito no esté vacío
@@ -301,50 +308,113 @@ public class PanelCarrito extends JPanel {
             return;
         }
 
-        Venta venta = null;
-        try {
-            // Generar código de factura única
-            String codigoFactura = ventanaCarrito.generarCodigoFactura();
+        setVentaEnCurso(true);
 
-            // Convertir el carrito en una venta (checkout) y limpiarlo
-            venta = carrito.checkout(codigoFactura);
+        new SwingWorker<Venta, Void>() {
+            /** Venta que se intentó registrar; se usa para restaurar el carrito si falla. */
+            private volatile Venta ventaIntentada;
 
-            // Registrar la venta y marcar sus prendas como vendidas
-            if (!gestionVentas.registrar(venta)) {
-                throw new IllegalStateException("No se pudo registrar la venta.");
+            @Override
+            protected Venta doInBackground() {
+                // Consultas a MySQL fuera del hilo de Swing. El carrito no se puede
+                // modificar mientras tanto porque sus botones están deshabilitados.
+                String codigoFactura = ventanaCarrito.generarCodigoFactura();
+
+                // Convertir el carrito en una venta (checkout) y limpiarlo
+                ventaIntentada = carrito.checkout(codigoFactura);
+
+                // Registrar la venta y marcar sus prendas como vendidas
+                if (!gestionVentas.registrar(ventaIntentada)) {
+                    throw new IllegalStateException("No se pudo registrar la venta.");
+                }
+                return ventaIntentada;
             }
 
-            // Mostrar resumen de la factura
-            String mensaje = String.format(
-                    "Venta completada.%n%nFactura: %s%nPrendas: %d%nSubtotal: ¢%,.2f%nIVA (13%%): ¢%,.2f%nTotal: ¢%,.2f",
-                    venta.getCodigoFactura(),
-                    venta.getCantidadPrendas(),
-                    venta.getSubtotal(),
-                    venta.getIva(),
-                    venta.getTotal());
-            JOptionPane.showMessageDialog(this, mensaje, "Venta exitosa",
-                    JOptionPane.INFORMATION_MESSAGE);
+            @Override
+            protected void done() {
+                // done() se ejecuta en el hilo de Swing
+                setVentaEnCurso(false);
+                try {
+                    mostrarVentaExitosa(get());
+                } catch (InterruptedException excepcion) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException excepcion) {
+                    restaurarCarrito(ventaIntentada);
+                    mostrarErrorVenta(excepcion.getCause());
+                }
+            }
+        }.execute();
+    }
 
-            // Refrescar carrito y disponibles
-            recargar();
-            ventanaCarrito.actualizarDisponibles();
-            ventanaCarrito.actualizarReportes();
+    /**
+     * Muestra el resumen de una venta registrada y refresca la interfaz.
+     *
+     * @param venta venta confirmada en la base de datos.
+     */
+    private void mostrarVentaExitosa(Venta venta) {
+        // Mostrar resumen de la factura
+        String mensaje = String.format(
+                "Venta completada.%n%nFactura: %s%nPrendas: %d%nSubtotal: ¢%,.2f%nIVA (13%%): ¢%,.2f%nTotal: ¢%,.2f",
+                venta.getCodigoFactura(),
+                venta.getCantidadPrendas(),
+                venta.getSubtotal(),
+                venta.getIva(),
+                venta.getTotal());
+        JOptionPane.showMessageDialog(this, mensaje, "Venta exitosa",
+                JOptionPane.INFORMATION_MESSAGE);
 
-        } catch (IllegalStateException excepcion) {
-            restaurarCarrito(venta);
-            JOptionPane.showMessageDialog(this,
-                    excepcion.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        } catch (PersistenciaException excepcion) {
-            restaurarCarrito(venta);
+        // Refrescar carrito y disponibles
+        recargar();
+        ventanaCarrito.actualizarDisponibles();
+        ventanaCarrito.actualizarReportes();
+    }
+
+    /**
+     * Informa por qué no se pudo registrar una venta.
+     *
+     * @param causa error producido durante el registro de la venta.
+     */
+    private void mostrarErrorVenta(Throwable causa) {
+        if (causa instanceof PersistenciaException) {
             JOptionPane.showMessageDialog(this,
                     "No se pudo registrar la venta en la base de datos.\n"
                             + "Es posible que alguna prenda ya se haya vendido o que MySQL no esté disponible.\n"
                             + "El carrito se conservó para que pueda intentarlo de nuevo.",
                     "Error de base de datos",
                     JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    causa.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Activa o desactiva el estado de "venta en curso".
+     *
+     * <p>Mientras se registra una venta se deshabilitan los botones que
+     * modifican el carrito o cambian de ventana, y se muestra un cursor de
+     * espera.</p>
+     *
+     * @param enCurso {@code true} al iniciar el registro, {@code false} al terminar.
+     */
+    private void setVentaEnCurso(boolean enCurso) {
+        ventaEnCurso = enCurso;
+        btnFinalizar.setEnabled(!enCurso);
+        btnEliminar.setEnabled(!enCurso);
+        btnAdmin.setEnabled(!enCurso);
+        btnFinalizar.setText(enCurso ? "Registrando venta..." : "Finalizar Compra");
+        setCursor(enCurso ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR) : Cursor.getDefaultCursor());
+    }
+
+    /**
+     * Indica si se está registrando una venta en segundo plano.
+     *
+     * @return {@code true} mientras la venta no haya terminado de registrarse.
+     */
+    public boolean isVentaEnCurso() {
+        return ventaEnCurso;
     }
 
     /**
