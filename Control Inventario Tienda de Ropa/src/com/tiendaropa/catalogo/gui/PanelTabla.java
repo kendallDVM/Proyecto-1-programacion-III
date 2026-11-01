@@ -2,10 +2,12 @@ package com.tiendaropa.catalogo.gui;
 
 import com.tiendaropa.catalogo.modelo.Prenda;
 import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
+import com.tiendaropa.infraestructura.PersistenciaException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -72,7 +74,7 @@ public class PanelTabla extends JPanel {
      * Construye la tabla y su modelo de columnas para las prendas.
      */
     private void construirTabla() {
-        modelo = new DefaultTableModel(new Object[]{"Código", "Tipo", "Talla", "Estado", "Precio"}, 0) {
+        modelo = new DefaultTableModel(new Object[]{"Código", "Tipo", "Talla", "Estado", "Precio", "Disponible"}, 0) {
             @Override
             public boolean isCellEditable(int fila, int columna) {
                 return false;
@@ -113,13 +115,25 @@ public class PanelTabla extends JPanel {
 
     /**
      * Actualiza la tabla con las prendas que coinciden con el filtro actual.
+     *
+     * <p>Si la base de datos no está disponible, deja la tabla vacía e
+     * informa el problema sin cerrar la ventana.</p>
      */
     public void actualizarTabla() {
         String filtro = campoFiltro.getText().trim();
-        List<Prenda> lista = filtro.isEmpty()
-                ? repositorio.obtenerTodas()
-                : repositorio.buscarPorTexto(filtro);
-        cargarLista(lista);
+        try {
+            List<Prenda> lista = filtro.isEmpty()
+                    ? repositorio.obtenerTodas()
+                    : repositorio.buscarPorTexto(filtro);
+            cargarLista(lista);
+        } catch (PersistenciaException excepcion) {
+            cargarLista(List.of());
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo cargar el catálogo desde la base de datos.\n"
+                            + "Verifique que MySQL esté disponible e intente de nuevo.",
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -136,7 +150,8 @@ public class PanelTabla extends JPanel {
                     prenda.getTipo(),
                     prenda.getTalla(),
                     prenda.getEstado(),
-                    prenda.getPrecio()
+                    prenda.getPrecio(),
+                    prenda.isDisponible() ? "Sí" : "Vendida"
             });
         }
     }

@@ -6,6 +6,7 @@ import com.tiendaropa.catalogo.modelo.Talla;
 import com.tiendaropa.catalogo.modelo.TipoPrenda;
 import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 import com.tiendaropa.catalogo.utilidades.ValidadorPrendas;
+import com.tiendaropa.infraestructura.PersistenciaException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -125,7 +126,8 @@ public class PanelFormulario extends JPanel {
      *
      * <p>Construye la prenda desde el formulario, valida sus datos (código
      * único, campos obligatorios y precio positivo) y la añade al repositorio.
-     * Tras el éxito limpia el formulario y notifica el cambio.</p>
+     * Tras el éxito limpia el formulario y notifica el cambio. Si la base
+     * de datos falla, informa el error sin cerrar la ventana.</p>
      */
     private void accionCrear() {
         try {
@@ -140,6 +142,8 @@ public class PanelFormulario extends JPanel {
             }
         } catch (IllegalArgumentException excepcion) {
             mostrarError(excepcion.getMessage());
+        } catch (PersistenciaException excepcion) {
+            mostrarErrorBaseDatos("registrar la prenda");
         }
     }
 
@@ -148,12 +152,20 @@ public class PanelFormulario extends JPanel {
      *
      * <p>Construye la prenda desde el formulario y, tras validarla,
      * reemplaza los datos del registro cuyo código coincide en el
-     * repositorio. Notifica el cambio si la actualización es correcta.</p>
+     * repositorio. Conserva la disponibilidad que la prenda ya tenía, para
+     * que editar una prenda vendida no la vuelva a poner a la venta.
+     * Notifica el cambio si la actualización es correcta.</p>
      */
     private void accionActualizar() {
         try {
             Prenda actualizada = construirPrenda();
             ValidadorPrendas.validar(repositorio, actualizada, false);
+            Prenda existente = repositorio.buscarPorCodigo(actualizada.getCodigo());
+            if (existente == null) {
+                throw new IllegalArgumentException(
+                        "No existe una prenda con el código '" + actualizada.getCodigo() + "'.");
+            }
+            actualizada.setDisponible(existente.isDisponible());
             if (!repositorio.actualizar(actualizada)) {
                 throw new IllegalArgumentException(
                         "No existe una prenda con el código '" + actualizada.getCodigo() + "'.");
@@ -163,14 +175,18 @@ public class PanelFormulario extends JPanel {
             accionAlModificar.run();
         } catch (IllegalArgumentException excepcion) {
             mostrarError(excepcion.getMessage());
+        } catch (PersistenciaException excepcion) {
+            mostrarErrorBaseDatos("actualizar la prenda");
         }
     }
 
     /**
      * Elimina del catálogo la prenda cuyo código se indica en el formulario.
      *
-     * <p>Si el código está vacío se muestra un mensaje de aviso. En caso
-     * contrario se intenta eliminar y se notifica el resultado.</p>
+     * <p>Si el código está vacío se muestra un mensaje de aviso. Una prenda
+     * que ya fue vendida no se elimina, porque forma parte del historial de
+     * ventas. En caso contrario se intenta eliminar y se notifica el
+     * resultado.</p>
      */
     private void accionEliminar() {
         String codigo = campoCodigo.getText().trim();
@@ -178,13 +194,27 @@ public class PanelFormulario extends JPanel {
             mostrarError("Indique el código de la prenda que desea eliminar.");
             return;
         }
-        if (!repositorio.eliminar(codigo)) {
-            mostrarError("No existe una prenda con el código '" + codigo + "'.");
-            return;
+        try {
+            Prenda existente = repositorio.buscarPorCodigo(codigo);
+            if (existente == null) {
+                mostrarError("No existe una prenda con el código '" + codigo + "'.");
+                return;
+            }
+            if (!existente.isDisponible()) {
+                mostrarError("No se puede eliminar la prenda '" + codigo + "' porque ya fue vendida.\n"
+                        + "Se conserva para mantener el historial de ventas.");
+                return;
+            }
+            if (!repositorio.eliminar(codigo)) {
+                mostrarError("No existe una prenda con el código '" + codigo + "'.");
+                return;
+            }
+            mostrarInfo("Prenda con código '" + codigo + "' eliminada.");
+            limpiarFormulario();
+            accionAlModificar.run();
+        } catch (PersistenciaException excepcion) {
+            mostrarErrorBaseDatos("eliminar la prenda");
         }
-        mostrarInfo("Prenda con código '" + codigo + "' eliminada.");
-        limpiarFormulario();
-        accionAlModificar.run();
     }
 
     /**
@@ -243,6 +273,21 @@ public class PanelFormulario extends JPanel {
      */
     private void mostrarError(String mensaje) {
         JOptionPane.showMessageDialog(this, mensaje, "Error de validación",
+                JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Informa que una operación no se pudo completar por un fallo de la
+     * base de datos, sin mostrar detalles técnicos al usuario.
+     *
+     * @param operacion descripción de la operación que falló, por ejemplo
+     *                  "registrar la prenda".
+     */
+    private void mostrarErrorBaseDatos(String operacion) {
+        JOptionPane.showMessageDialog(this,
+                "No se pudo " + operacion + " en la base de datos.\n"
+                        + "Verifique que MySQL esté disponible e intente de nuevo.",
+                "Error de base de datos",
                 JOptionPane.ERROR_MESSAGE);
     }
 
