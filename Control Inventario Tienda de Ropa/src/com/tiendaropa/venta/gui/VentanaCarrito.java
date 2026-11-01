@@ -3,11 +3,10 @@ package com.tiendaropa.venta.gui;
 
 import com.tiendaropa.catalogo.gui.VentanaCatalogo;
 import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
-import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
 import com.tiendaropa.venta.modelo.Venta;
-import com.tiendaropa.venta.repositorio.RepositorioVentas;
+import com.tiendaropa.venta.repositorio.IGestionVentas;
 import com.tiendaropa.venta.servicio.ServicioBusqueda;
 import javax.swing.*;
 
@@ -22,9 +21,8 @@ import javax.swing.*;
  */
 public class VentanaCarrito extends JFrame {
 
-    private IGestionPrendas gestionPrendas;   // Repositorio de prendas (contrato)
-    private RepositorioPrendas repositorioPrendas; // Repositorio concreto (para administración)
-    private RepositorioVentas gestionVentas;     // Repositorio de ventas (compartido)
+    private IGestionPrendas gestionPrendas;   // Repositorio de prendas (compartido con la administración)
+    private IGestionVentas gestionVentas;     // Repositorio de ventas (compartido)
     private Carrito carrito;                     // Carrito del cliente
     private ServicioBusqueda servicioBusqueda;   // Servicio de búsqueda
 
@@ -40,16 +38,15 @@ public class VentanaCarrito extends JFrame {
     /**
      * Crea la ventana principal (tienda) con inyección de dependencias.
      *
-     * @param repositorioPrendas Repositorio de prendas (compartido con la administración).
-     * @param repositorioVentas  Repositorio de ventas (historial).
+     * @param gestionPrendas Repositorio de prendas (compartido con la administración).
+     * @param gestionVentas  Repositorio de ventas (historial).
      */
-    public VentanaCarrito(RepositorioPrendas repositorioPrendas, RepositorioVentas repositorioVentas) {
+    public VentanaCarrito(IGestionPrendas gestionPrendas, IGestionVentas gestionVentas) {
 
-        this.gestionPrendas = repositorioPrendas;
-        this.repositorioPrendas = repositorioPrendas;
-        this.gestionVentas = repositorioVentas;
+        this.gestionPrendas = gestionPrendas;
+        this.gestionVentas = gestionVentas;
         this.carrito = new Carrito();
-        this.servicioBusqueda = new ServicioBusqueda(repositorioPrendas);
+        this.servicioBusqueda = new ServicioBusqueda(gestionPrendas);
 
 
 
@@ -189,7 +186,7 @@ public class VentanaCarrito extends JFrame {
     public void abrirAdministracion() {
         if (verificarCredenciales()) {
             setVisible(false);
-            VentanaCatalogo ventanaAdmin = new VentanaCatalogo(repositorioPrendas, this::mostrarTienda);
+            VentanaCatalogo ventanaAdmin = new VentanaCatalogo(gestionPrendas, this::mostrarTienda);
             ventanaAdmin.setVisible(true);
         }
     }

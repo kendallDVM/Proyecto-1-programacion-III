@@ -4,7 +4,7 @@ import com.tiendaropa.catalogo.modelo.EstadoPrenda;
 import com.tiendaropa.catalogo.modelo.Prenda;
 import com.tiendaropa.catalogo.modelo.Talla;
 import com.tiendaropa.catalogo.modelo.TipoPrenda;
-import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
+import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 import com.tiendaropa.catalogo.utilidades.ValidadorPrendas;
 
 import javax.swing.BorderFactory;
@@ -30,7 +30,7 @@ import java.awt.GridLayout;
 public class PanelFormulario extends JPanel {
 
     /** Repositorio sobre el que se realizan las operaciones CRUD. */
-    private final RepositorioPrendas repositorio;
+    private final IGestionPrendas repositorio;
 
     /** Acción de notificación invocada tras una modificación de datos. */
     private final Runnable accionAlModificar;
@@ -56,7 +56,7 @@ public class PanelFormulario extends JPanel {
      * @param repositorio      repositorio contra el que se ejecutan las operaciones.
      * @param accionAlModificar acción ejecutada tras un cambio de datos.
      */
-    public PanelFormulario(RepositorioPrendas repositorio, Runnable accionAlModificar) {
+    public PanelFormulario(IGestionPrendas repositorio, Runnable accionAlModificar) {
         this.repositorio = repositorio;
         this.accionAlModificar = accionAlModificar;
 

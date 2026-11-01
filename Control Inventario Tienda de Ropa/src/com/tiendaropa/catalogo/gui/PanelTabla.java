@@ -1,7 +1,7 @@
 package com.tiendaropa.catalogo.gui;
 
 import com.tiendaropa.catalogo.modelo.Prenda;
-import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
+import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -26,7 +26,7 @@ import java.util.List;
 public class PanelTabla extends JPanel {
 
     /** Repositorio del cual se obtienen los datos a mostrar. */
-    private final RepositorioPrendas repositorio;
+    private final IGestionPrendas repositorio;
 
     /** Campo de texto para introducir el criterio de filtrado. */
     private JTextField campoFiltro;
@@ -45,7 +45,7 @@ public class PanelTabla extends JPanel {
      *
      * @param repositorio repositorio contra el que se consultan las prendas.
      */
-    public PanelTabla(RepositorioPrendas repositorio) {
+    public PanelTabla(IGestionPrendas repositorio) {
         this.repositorio = repositorio;
         setLayout(new BorderLayout(8, 8));
         setBorder(BorderFactory.createTitledBorder("Prendas del catálogo"));
