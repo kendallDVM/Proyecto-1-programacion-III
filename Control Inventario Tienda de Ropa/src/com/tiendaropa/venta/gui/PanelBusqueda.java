@@ -85,6 +85,16 @@ public class PanelBusqueda extends JPanel {
             cmbTipo.addItem(tipo);
         }
         cmbTipo.setRenderer(new DefaultListCellRenderer() {
+            /**
+             * Muestra "Todos" para la opción vacía y el nombre del tipo en las demás.
+             *
+             * @param list         lista del combo.
+             * @param value        valor a mostrar ({@code null} significa "Todos").
+             * @param index        posición del valor en la lista.
+             * @param isSelected   si el valor está seleccionado.
+             * @param cellHasFocus si la celda tiene el foco.
+             * @return el componente configurado para mostrar el valor.
+             */
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
@@ -102,6 +112,16 @@ public class PanelBusqueda extends JPanel {
             cmbTalla.addItem(talla);
         }
         cmbTalla.setRenderer(new DefaultListCellRenderer() {
+            /**
+             * Muestra "Todas" para la opción vacía y el nombre de la talla en las demás.
+             *
+             * @param list         lista del combo.
+             * @param value        valor a mostrar ({@code null} significa "Todas").
+             * @param index        posición del valor en la lista.
+             * @param isSelected   si el valor está seleccionado.
+             * @param cellHasFocus si la celda tiene el foco.
+             * @return el componente configurado para mostrar el valor.
+             */
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
@@ -119,6 +139,16 @@ public class PanelBusqueda extends JPanel {
             cmbEstado.addItem(estado);
         }
         cmbEstado.setRenderer(new DefaultListCellRenderer() {
+            /**
+             * Muestra "Todos" para la opción vacía y la descripción del estado en las demás.
+             *
+             * @param list         lista del combo.
+             * @param value        valor a mostrar ({@code null} significa "Todos").
+             * @param index        posición del valor en la lista.
+             * @param isSelected   si el valor está seleccionado.
+             * @param cellHasFocus si la celda tiene el foco.
+             * @return el componente configurado para mostrar el valor.
+             */
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {

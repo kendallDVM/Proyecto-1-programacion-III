@@ -1,7 +1,7 @@
 package com.tiendaropa.catalogo.gui;
 
 import com.tiendaropa.catalogo.modelo.Prenda;
-import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
+import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -20,7 +20,7 @@ import java.awt.event.WindowEvent;
 public class VentanaCatalogo extends JFrame {
 
     /** Repositorio único compartido por todos los paneles de la ventana. */
-    private final RepositorioPrendas repositorio;
+    private final IGestionPrendas repositorio;
 
     /** Acción para volver a la tienda al cerrar la administración. */
     private final Runnable accionAlVolver;
@@ -38,7 +38,7 @@ public class VentanaCatalogo extends JFrame {
      * @param accionAlVolver acción que se ejecuta al cerrar la administración
      *                       para volver a la tienda.
      */
-    public VentanaCatalogo(RepositorioPrendas repositorio, Runnable accionAlVolver) {
+    public VentanaCatalogo(IGestionPrendas repositorio, Runnable accionAlVolver) {
 
         this.repositorio = repositorio;
         this.accionAlVolver = accionAlVolver;
@@ -53,6 +53,11 @@ public class VentanaCatalogo extends JFrame {
 
         // Si se cierra esta ventana (con la X), volver a la tienda
         addWindowListener(new WindowAdapter() {
+            /**
+             * Vuelve a la tienda cuando el usuario cierra la ventana con la X.
+             *
+             * @param evento evento de cierre de la ventana.
+             */
             @Override
             public void windowClosing(WindowEvent evento) {
                 if (accionAlVolver != null) {

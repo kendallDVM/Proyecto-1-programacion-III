@@ -1,5 +1,8 @@
 package com.tiendaropa.venta.gui;
 
+import com.tiendaropa.cliente.modelo.Cliente;
+import com.tiendaropa.cliente.repositorio.IGestionClientes;
+import com.tiendaropa.infraestructura.PersistenciaException;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
 import com.tiendaropa.venta.modelo.Venta;
@@ -8,6 +11,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -28,11 +32,16 @@ public class PanelCarrito extends JPanel {
     private VentanaCarrito ventanaCarrito;      // Referencia a ventana principal
 
     private IGestionVentas gestionVentas;        // Historial de ventas
+    private IGestionClientes gestionClientes;    // Consulta de clientes registrados
 
     private JTable tblCarrito;                  // Tabla del carrito
     private DefaultTableModel modeloTabla;      // Modelo de datos
     private JButton btnEliminar;                // Botón eliminar
     private JButton btnFinalizar;               // Botón finalizar compra
+    private JButton btnAdmin;                   // Botón para abrir la administración
+
+    /** Indica si se está registrando una venta en segundo plano. */
+    private boolean ventaEnCurso = false;
 
     private JLabel lblSubtotal;                 // Etiqueta subtotal
     private JLabel lblIVA;                      // Etiqueta IVA (13%)
@@ -47,12 +56,14 @@ public class PanelCarrito extends JPanel {
      * @param carrito Carrito del cliente
      * @param ventanaCarrito Referencia a ventana principal
      * @param gestionVentas Historial de ventas
+     * @param gestionClientes Consulta de clientes para asociarlos a la venta
      */
     public PanelCarrito(Carrito carrito, VentanaCarrito ventanaCarrito,
-                        IGestionVentas gestionVentas) {
+                        IGestionVentas gestionVentas, IGestionClientes gestionClientes) {
         this.carrito = carrito;
         this.ventanaCarrito = ventanaCarrito;
         this.gestionVentas = gestionVentas;
+        this.gestionClientes = gestionClientes;
 
         // Configurar el panel
         configurarPanel();
@@ -119,7 +130,13 @@ public class PanelCarrito extends JPanel {
 
         // Crear modelo de tabla vacío
         modeloTabla = new DefaultTableModel(columnas, 0) {
-            // Hacer la tabla no editable
+            /**
+             * Impide editar las celdas: el carrito se modifica con sus botones.
+             *
+             * @param row    fila de la celda.
+             * @param column columna de la celda.
+             * @return siempre {@code false}.
+             */
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -159,7 +176,7 @@ public class PanelCarrito extends JPanel {
         panelBotones.add(btnEliminar);
         panelBotones.add(btnFinalizar);
 
-        JButton btnAdmin = new JButton("Administrador");
+        btnAdmin = new JButton("Administrador");
         btnAdmin.addActionListener(e -> ventanaCarrito.abrirAdministracion());
         panelBotones.add(btnAdmin);
 
@@ -283,9 +300,12 @@ public class PanelCarrito extends JPanel {
     // ========== LÓGICA DE FINALIZAR COMPRA ==========
 
     /**
-     * Procesa el checkout del carrito: valida que no esté vacío, genera la
-     * factura, registra la venta, retira las prendas vendidas del catálogo y
-     * refresca la interfaz.
+     * Inicia el checkout del carrito: valida que no esté vacío y pide la
+     * cédula del cliente.
+     *
+     * <p>Si la cédula se deja vacía, la venta se registra sin cliente. Si se
+     * indica una cédula, se busca el cliente en segundo plano; si no existe,
+     * se pide su nombre para registrarlo junto con la venta.</p>
      */
     private void finalizarCompra() {
         // Validar que el carrito no esté vacío
@@ -297,40 +317,251 @@ public class PanelCarrito extends JPanel {
             return;
         }
 
-        try {
-            // Generar código de factura única
-            String codigoFactura = ventanaCarrito.generarCodigoFactura();
-
-            // Convertir el carrito en una venta (checkout) y limpiarlo
-            Venta venta = carrito.checkout(codigoFactura);
-
-            // Registrar la venta en el historial
-            gestionVentas.registrar(venta);
-
-            // Retirar permanentemente las prendas vendidas del catálogo
-            ventanaCarrito.retirarPrendasVendidas(venta);
-
-            // Mostrar resumen de la factura
-            String mensaje = String.format(
-                    "Venta completada.%n%nFactura: %s%nPrendas: %d%nSubtotal: ¢%,.2f%nIVA (13%%): ¢%,.2f%nTotal: ¢%,.2f",
-                    venta.getCodigoFactura(),
-                    venta.getCantidadPrendas(),
-                    venta.getSubtotal(),
-                    venta.getIva(),
-                    venta.getTotal());
-            JOptionPane.showMessageDialog(this, mensaje, "Venta exitosa",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            // Refrescar carrito y disponibles
-            recargar();
-            ventanaCarrito.actualizarDisponibles();
-            ventanaCarrito.actualizarReportes();
-
-        } catch (IllegalStateException excepcion) {
+        String cedula = JOptionPane.showInputDialog(this,
+                "Cédula del cliente (deje vacío para una venta sin cliente):",
+                "Cliente de la venta",
+                JOptionPane.QUESTION_MESSAGE);
+        if (cedula == null) {
+            return; // El usuario canceló
+        }
+        cedula = cedula.trim();
+        if (cedula.isEmpty()) {
+            registrarVenta(null);
+            return;
+        }
+        if (cedula.length() > Cliente.LARGO_MAXIMO_CEDULA) {
             JOptionPane.showMessageDialog(this,
-                    excepcion.getMessage(),
+                    "La cédula no puede tener más de " + Cliente.LARGO_MAXIMO_CEDULA + " caracteres.",
+                    "Cliente", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        buscarCliente(cedula);
+    }
+
+    /**
+     * Busca en segundo plano el cliente con la cédula indicada y continúa la venta.
+     *
+     * <p>Si el cliente existe, se confirma con el usuario; si no existe, se
+     * pide su nombre para registrarlo junto con la venta.</p>
+     *
+     * @param cedula cédula del cliente a buscar.
+     */
+    private void buscarCliente(String cedula) {
+        setVentaEnCurso(true);
+        btnFinalizar.setText("Buscando cliente...");
+
+        new SwingWorker<Cliente, Void>() {
+            /**
+             * Consulta el cliente en MySQL fuera del hilo de Swing.
+             *
+             * @return el cliente encontrado, o {@code null} si no existe.
+             */
+            @Override
+            protected Cliente doInBackground() {
+                return gestionClientes.buscarPorCedula(cedula);
+            }
+
+            /**
+             * Continúa la venta en el hilo de Swing según el resultado de la búsqueda.
+             */
+            @Override
+            protected void done() {
+                setVentaEnCurso(false);
+                try {
+                    continuarConCliente(cedula, get());
+                } catch (InterruptedException excepcion) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException excepcion) {
+                    JOptionPane.showMessageDialog(PanelCarrito.this,
+                            "No se pudo consultar el cliente en la base de datos.\n"
+                                    + "Verifique que MySQL esté disponible e intente de nuevo.",
+                            "Error de base de datos",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Confirma el cliente encontrado o registra uno nuevo, y luego registra la venta.
+     *
+     * @param cedula     cédula indicada por el usuario.
+     * @param encontrado cliente existente con esa cédula, o {@code null} si es nuevo.
+     */
+    private void continuarConCliente(String cedula, Cliente encontrado) {
+        if (encontrado != null) {
+            int opcion = JOptionPane.showConfirmDialog(this,
+                    "Cliente registrado: " + encontrado.getNombreCompleto()
+                            + "\n¿Desea asociarlo a esta venta?",
+                    "Cliente de la venta",
+                    JOptionPane.YES_NO_OPTION);
+            if (opcion == JOptionPane.YES_OPTION) {
+                registrarVenta(encontrado);
+            }
+            return;
+        }
+
+        String nombre = JOptionPane.showInputDialog(this,
+                "La cédula " + cedula + " no está registrada.\nNombre completo del cliente nuevo:",
+                "Cliente nuevo",
+                JOptionPane.QUESTION_MESSAGE);
+        if (nombre == null) {
+            return; // El usuario canceló
+        }
+        try {
+            registrarVenta(new Cliente(cedula, nombre));
+        } catch (IllegalArgumentException excepcion) {
+            JOptionPane.showMessageDialog(this, excepcion.getMessage(),
+                    "Cliente", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Genera la factura, registra la venta y refresca la interfaz.
+     *
+     * <p>El repositorio guarda el cliente (si es nuevo), la venta, sus líneas y
+     * marca las prendas como vendidas en una sola transacción. Esa operación se
+     * ejecuta en segundo plano con un {@link SwingWorker}; mientras tanto se
+     * deshabilitan los botones del carrito para evitar dobles clics. Si el
+     * registro falla, las prendas vuelven al carrito para que el usuario pueda
+     * intentarlo de nuevo.</p>
+     *
+     * @param cliente cliente asociado a la venta, o {@code null} si no se indicó.
+     */
+    private void registrarVenta(Cliente cliente) {
+        setVentaEnCurso(true);
+
+        new SwingWorker<Venta, Void>() {
+            /** Venta que se intentó registrar; se usa para restaurar el carrito si falla. */
+            private volatile Venta ventaIntentada;
+
+            /**
+             * Genera la factura y registra la venta en MySQL fuera del hilo de Swing.
+             *
+             * @return la venta registrada.
+             * @throws IllegalStateException si el repositorio no pudo registrarla.
+             */
+            @Override
+            protected Venta doInBackground() {
+                // Consultas a MySQL fuera del hilo de Swing. El carrito no se puede
+                // modificar mientras tanto porque sus botones están deshabilitados.
+                String codigoFactura = ventanaCarrito.generarCodigoFactura();
+
+                // Convertir el carrito en una venta (checkout) y limpiarlo
+                ventaIntentada = carrito.checkout(codigoFactura, cliente);
+
+                // Registrar la venta y marcar sus prendas como vendidas
+                if (!gestionVentas.registrar(ventaIntentada)) {
+                    throw new IllegalStateException("No se pudo registrar la venta.");
+                }
+                return ventaIntentada;
+            }
+
+            /**
+             * Muestra el resultado de la venta en el hilo de Swing.
+             */
+            @Override
+            protected void done() {
+                // done() se ejecuta en el hilo de Swing
+                setVentaEnCurso(false);
+                try {
+                    mostrarVentaExitosa(get());
+                } catch (InterruptedException excepcion) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException excepcion) {
+                    restaurarCarrito(ventaIntentada);
+                    mostrarErrorVenta(excepcion.getCause());
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Muestra el resumen de una venta registrada y refresca la interfaz.
+     *
+     * @param venta venta confirmada en la base de datos.
+     */
+    private void mostrarVentaExitosa(Venta venta) {
+        // Mostrar resumen de la factura
+        String mensaje = String.format(
+                "Venta completada.%n%nFactura: %s%nCliente: %s%nPrendas: %d%nSubtotal: ¢%,.2f%nIVA (13%%): ¢%,.2f%nTotal: ¢%,.2f",
+                venta.getCodigoFactura(),
+                venta.getCliente() != null ? venta.getCliente().toString() : "Sin cliente",
+                venta.getCantidadPrendas(),
+                venta.getSubtotal(),
+                venta.getIva(),
+                venta.getTotal());
+        JOptionPane.showMessageDialog(this, mensaje, "Venta exitosa",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        // Refrescar carrito y disponibles
+        recargar();
+        ventanaCarrito.actualizarDisponibles();
+        ventanaCarrito.actualizarReportes();
+    }
+
+    /**
+     * Informa por qué no se pudo registrar una venta.
+     *
+     * @param causa error producido durante el registro de la venta.
+     */
+    private void mostrarErrorVenta(Throwable causa) {
+        if (causa instanceof PersistenciaException) {
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo registrar la venta en la base de datos.\n"
+                            + "Es posible que alguna prenda ya se haya vendido o que MySQL no esté disponible.\n"
+                            + "El carrito se conservó para que pueda intentarlo de nuevo.",
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    causa.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Activa o desactiva el estado de "venta en curso".
+     *
+     * <p>Mientras se registra una venta se deshabilitan los botones que
+     * modifican el carrito o cambian de ventana, y se muestra un cursor de
+     * espera.</p>
+     *
+     * @param enCurso {@code true} al iniciar el registro, {@code false} al terminar.
+     */
+    private void setVentaEnCurso(boolean enCurso) {
+        ventaEnCurso = enCurso;
+        btnFinalizar.setEnabled(!enCurso);
+        btnEliminar.setEnabled(!enCurso);
+        btnAdmin.setEnabled(!enCurso);
+        btnFinalizar.setText(enCurso ? "Registrando venta..." : "Finalizar Compra");
+        setCursor(enCurso ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR) : Cursor.getDefaultCursor());
+    }
+
+    /**
+     * Indica si se está registrando una venta en segundo plano.
+     *
+     * @return {@code true} mientras la venta no haya terminado de registrarse.
+     */
+    public boolean isVentaEnCurso() {
+        return ventaEnCurso;
+    }
+
+    /**
+     * Devuelve al carrito las prendas de una venta que no se pudo registrar.
+     *
+     * <p>Conserva el precio congelado de cada línea y refresca la tabla.</p>
+     *
+     * @param venta venta fallida; si es {@code null} no se realiza ningún cambio.
+     */
+    private void restaurarCarrito(Venta venta) {
+        if (venta == null) {
+            return;
+        }
+        for (LineaCarrito linea : venta.getLineas()) {
+            carrito.agregarLinea(linea);
+        }
+        recargar();
     }
 }

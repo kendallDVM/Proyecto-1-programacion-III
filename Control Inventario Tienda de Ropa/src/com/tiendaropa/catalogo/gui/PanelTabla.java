@@ -1,20 +1,24 @@
 package com.tiendaropa.catalogo.gui;
 
 import com.tiendaropa.catalogo.modelo.Prenda;
-import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
+import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
+import com.tiendaropa.catalogo.servicio.CargadorCatalogoSwingWorker;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingWorker;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Panel que muestra las prendas del catálogo en una tabla {@link JTable}
@@ -26,7 +30,7 @@ import java.util.List;
 public class PanelTabla extends JPanel {
 
     /** Repositorio del cual se obtienen los datos a mostrar. */
-    private final RepositorioPrendas repositorio;
+    private final IGestionPrendas repositorio;
 
     /** Campo de texto para introducir el criterio de filtrado. */
     private JTextField campoFiltro;
@@ -40,12 +44,15 @@ public class PanelTabla extends JPanel {
     /** Lista de prendas cargadas, sincronizada en orden con las filas. */
     private List<Prenda> prendasCargadas = new ArrayList<>();
 
+    /** Número de la carga más reciente; permite descartar resultados anteriores. */
+    private int cargaActual = 0;
+
     /**
      * Construye el panel, inicializa sus componentes y carga los datos.
      *
      * @param repositorio repositorio contra el que se consultan las prendas.
      */
-    public PanelTabla(RepositorioPrendas repositorio) {
+    public PanelTabla(IGestionPrendas repositorio) {
         this.repositorio = repositorio;
         setLayout(new BorderLayout(8, 8));
         setBorder(BorderFactory.createTitledBorder("Prendas del catálogo"));
@@ -72,7 +79,14 @@ public class PanelTabla extends JPanel {
      * Construye la tabla y su modelo de columnas para las prendas.
      */
     private void construirTabla() {
-        modelo = new DefaultTableModel(new Object[]{"Código", "Tipo", "Talla", "Estado", "Precio"}, 0) {
+        modelo = new DefaultTableModel(new Object[]{"Código", "Tipo", "Talla", "Estado", "Precio", "Disponible"}, 0) {
+            /**
+             * Impide editar las celdas: los cambios se hacen desde el formulario.
+             *
+             * @param fila    fila de la celda.
+             * @param columna columna de la celda.
+             * @return siempre {@code false}.
+             */
             @Override
             public boolean isCellEditable(int fila, int columna) {
                 return false;
@@ -113,13 +127,82 @@ public class PanelTabla extends JPanel {
 
     /**
      * Actualiza la tabla con las prendas que coinciden con el filtro actual.
+     *
+     * <p>La consulta a la base de datos se ejecuta en segundo plano para no
+     * congelar la ventana. El catálogo completo se carga con
+     * {@link CargadorCatalogoSwingWorker}; la búsqueda por texto usa un
+     * {@link SwingWorker} equivalente.</p>
      */
     public void actualizarTabla() {
         String filtro = campoFiltro.getText().trim();
-        List<Prenda> lista = filtro.isEmpty()
-                ? repositorio.obtenerTodas()
-                : repositorio.buscarPorTexto(filtro);
-        cargarLista(lista);
+        int numeroCarga = ++cargaActual;
+
+        if (filtro.isEmpty()) {
+            new CargadorCatalogoSwingWorker(repositorio) {
+                /**
+                 * Muestra el catálogo cargado, en el hilo de Swing.
+                 */
+                @Override
+                protected void done() {
+                    super.done(); // Guarda el resultado o el error de la consulta
+                    mostrarResultado(numeroCarga, getResultado(), getError());
+                }
+            }.execute();
+        } else {
+            new SwingWorker<List<Prenda>, Void>() {
+                /**
+                 * Busca las prendas por texto en MySQL, fuera del hilo de Swing.
+                 *
+                 * @return prendas que coinciden con el filtro.
+                 */
+                @Override
+                protected List<Prenda> doInBackground() {
+                    // Consulta a MySQL en un hilo de trabajo, fuera del hilo de Swing
+                    return repositorio.buscarPorTexto(filtro);
+                }
+
+                /**
+                 * Muestra el resultado de la búsqueda, en el hilo de Swing.
+                 */
+                @Override
+                protected void done() {
+                    try {
+                        mostrarResultado(numeroCarga, get(), null);
+                    } catch (InterruptedException excepcion) {
+                        Thread.currentThread().interrupt();
+                    } catch (ExecutionException excepcion) {
+                        mostrarResultado(numeroCarga, null, excepcion.getCause());
+                    }
+                }
+            }.execute();
+        }
+    }
+
+    /**
+     * Muestra en la tabla el resultado de una carga en segundo plano.
+     *
+     * <p>Se ejecuta en el hilo de Swing. Ignora los resultados de cargas
+     * anteriores a la más reciente. Si la base de datos no estuvo disponible,
+     * deja la tabla vacía e informa el problema sin cerrar la ventana.</p>
+     *
+     * @param numeroCarga número de la carga que produjo el resultado.
+     * @param prendas     prendas obtenidas, o {@code null} si hubo un error.
+     * @param error       error producido, o {@code null} si la carga fue exitosa.
+     */
+    private void mostrarResultado(int numeroCarga, List<Prenda> prendas, Throwable error) {
+        if (numeroCarga != cargaActual) {
+            return; // Ya se pidió una carga más reciente
+        }
+        if (error != null || prendas == null) {
+            cargarLista(List.of());
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo cargar el catálogo desde la base de datos.\n"
+                            + "Verifique que MySQL esté disponible e intente de nuevo.",
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        cargarLista(prendas);
     }
 
     /**
@@ -136,7 +219,8 @@ public class PanelTabla extends JPanel {
                     prenda.getTipo(),
                     prenda.getTalla(),
                     prenda.getEstado(),
-                    prenda.getPrecio()
+                    prenda.getPrecio(),
+                    prenda.isDisponible() ? "Sí" : "Vendida"
             });
         }
     }

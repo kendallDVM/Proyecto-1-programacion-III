@@ -1,6 +1,7 @@
 package com.tiendaropa.venta.servicio;
 
 
+import com.tiendaropa.cliente.modelo.Cliente;
 import com.tiendaropa.venta.modelo.LineaCarrito;
 import com.tiendaropa.venta.modelo.Venta;
 import java.util.List;
@@ -75,6 +76,19 @@ public interface ICarrito {
      * @throws IllegalStateException si el carrito está vacío.
      */
     Venta checkout(String codigoFactura);
+
+    /**
+     * Convierte el contenido del carrito en una venta asociada a un cliente.
+     *
+     * <p>Funciona igual que {@link #checkout(String)}, pero la venta queda
+     * asociada al cliente indicado.</p>
+     *
+     * @param codigoFactura código único de factura asignado a la venta.
+     * @param cliente       cliente que realiza la compra, o {@code null} si no se indica.
+     * @return la venta generada a partir del contenido del carrito.
+     * @throws IllegalStateException si el carrito está vacío.
+     */
+    Venta checkout(String codigoFactura, Cliente cliente);
 
 
 

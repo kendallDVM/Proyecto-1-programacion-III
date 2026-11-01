@@ -4,7 +4,7 @@ import com.tiendaropa.catalogo.modelo.EstadoPrenda;
 import com.tiendaropa.catalogo.modelo.Prenda;
 import com.tiendaropa.catalogo.modelo.Talla;
 import com.tiendaropa.catalogo.modelo.TipoPrenda;
-import com.tiendaropa.catalogo.repositorio.RepositorioPrendas;
+import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 
 /**
  * Utilidad encargada de validar los datos de las prendas antes de que
@@ -36,7 +36,7 @@ public final class ValidadorPrendas {
      *                    {@code false} si es una actualización.
      * @throws IllegalArgumentException si alguna regla de negocio no se cumple.
      */
-    public static void validar(RepositorioPrendas repositorio, Prenda prenda, boolean esNueva) {
+    public static void validar(IGestionPrendas repositorio, Prenda prenda, boolean esNueva) {
         if (repositorio == null) {
             throw new IllegalArgumentException("El repositorio no puede ser nulo.");
         }
@@ -93,7 +93,7 @@ public final class ValidadorPrendas {
      * @param codigo      código que se desea verificar.
      * @throws IllegalArgumentException si el código ya existe en el catálogo.
      */
-    public static void validarCodigoUnico(RepositorioPrendas repositorio, String codigo) {
+    public static void validarCodigoUnico(IGestionPrendas repositorio, String codigo) {
         if (codigoExiste(repositorio, codigo)) {
             throw new IllegalArgumentException("Ya existe una prenda con el código '" + codigo + "'.");
         }
@@ -106,7 +106,7 @@ public final class ValidadorPrendas {
      * @param codigo      código a verificar.
      * @return {@code true} si el código ya pertenece a una prenda registrada.
      */
-    public static boolean codigoExiste(RepositorioPrendas repositorio, String codigo) {
+    public static boolean codigoExiste(IGestionPrendas repositorio, String codigo) {
         return repositorio != null && repositorio.buscarPorCodigo(codigo) != null;
     }
 }

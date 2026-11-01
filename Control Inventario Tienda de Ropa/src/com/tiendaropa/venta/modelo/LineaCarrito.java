@@ -32,14 +32,39 @@ public class LineaCarrito {
      */
 
     public LineaCarrito(Prenda prenda) {
+        this(prenda, prenda.getPrecio(), LocalDateTime.now());
+    }
+
+    /**
+     * Crea una nueva línea de carrito con una prenda y un precio congelado específico.
+     *
+     * <p>Constructor utilizado para reconstruir una línea desde la base de datos,
+     * conservando el precio aplicado en el momento de la venta.</p>
+     *
+     * @param prenda         objeto {@link Prenda} de la línea (no puede ser nulo).
+     * @param precioEnMomento precio congelado al momento de la venta.
+     */
+    public LineaCarrito(Prenda prenda, double precioEnMomento) {
+        this(prenda, precioEnMomento, LocalDateTime.now());
+    }
+
+    /**
+     * Constructor común que usan los constructores públicos.
+     *
+     * @param prenda          objeto {@link Prenda} de la línea (no puede ser nulo).
+     * @param precioEnMomento precio congelado de la prenda.
+     * @param fechaAgregacion fecha en que la prenda se agregó al carrito.
+     * @throws IllegalArgumentException si la prenda es nula.
+     */
+    private LineaCarrito(Prenda prenda, double precioEnMomento, LocalDateTime fechaAgregacion) {
         // Validación: la prenda no puede ser nula
         if (prenda == null) {
             throw new IllegalArgumentException("La prenda no puede ser nula");
         }
 
         this.prenda = prenda;
-        this.precioEnMomento = prenda.getPrecio();  // Congela el precio AHORA
-        this.fechaAgregacion = LocalDateTime.now();  // Registra cuándo se agregó
+        this.precioEnMomento = precioEnMomento;
+        this.fechaAgregacion = fechaAgregacion;
     }
 
 
