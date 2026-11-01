@@ -40,13 +40,18 @@ public class ServicioBusqueda implements IBuscador {
 
 
     /**
-     * Obtiene todas las prendas disponibles del catálogo.
+     * Obtiene las prendas del catálogo que todavía se pueden vender.
      *
-     * @return {@code List<Prenda>} con todas las prendas.
+     * <p>Excluye las prendas ya vendidas, que se conservan en la base de datos
+     * como parte del historial de ventas.</p>
+     *
+     * @return {@code List<Prenda>} con las prendas disponibles.
      */
     @Override
     public List<Prenda> obtenerDisponibles() {
-        return gestionPrendas.obtenerTodas();
+        return gestionPrendas.obtenerTodas().stream()
+                .filter(Prenda::isDisponible)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -57,15 +62,15 @@ public class ServicioBusqueda implements IBuscador {
      * @param estado Estado de la prenda (puede ser null)
      * @param precioMin Precio mínimo (0 para ignorar)
      * @param precioMax Precio máximo (0 para ignorar)
-     * @return {@code List<Prenda>} que cumplen TODOS los criterios.
+     * @return {@code List<Prenda>} disponibles que cumplen TODOS los criterios.
      */
 
 
     @Override
     public List<Prenda> buscarAvanzado(String tipo, String talla, String estado,
                                        double precioMin, double precioMax) {
-        // Obtiene todas las prendas
-        List<Prenda> resultado = gestionPrendas.obtenerTodas();
+        // Obtiene solo las prendas disponibles (las vendidas no se muestran en la tienda)
+        List<Prenda> resultado = obtenerDisponibles();
 
         // Filtro 1: Por tipo (si se especifica)
         // Verifica si el usuario especificó un tipo de prenda

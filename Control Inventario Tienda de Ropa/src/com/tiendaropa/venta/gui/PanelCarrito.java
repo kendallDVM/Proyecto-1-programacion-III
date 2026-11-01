@@ -1,5 +1,6 @@
 package com.tiendaropa.venta.gui;
 
+import com.tiendaropa.infraestructura.PersistenciaException;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.LineaCarrito;
 import com.tiendaropa.venta.modelo.Venta;
@@ -284,8 +285,11 @@ public class PanelCarrito extends JPanel {
 
     /**
      * Procesa el checkout del carrito: valida que no esté vacío, genera la
-     * factura, registra la venta, retira las prendas vendidas del catálogo y
-     * refresca la interfaz.
+     * factura, registra la venta y refresca la interfaz.
+     *
+     * <p>El repositorio guarda la venta, sus líneas y marca las prendas como
+     * vendidas en una sola transacción. Si el registro falla, las prendas
+     * vuelven al carrito para que el usuario pueda intentarlo de nuevo.</p>
      */
     private void finalizarCompra() {
         // Validar que el carrito no esté vacío
@@ -297,18 +301,18 @@ public class PanelCarrito extends JPanel {
             return;
         }
 
+        Venta venta = null;
         try {
             // Generar código de factura única
             String codigoFactura = ventanaCarrito.generarCodigoFactura();
 
             // Convertir el carrito en una venta (checkout) y limpiarlo
-            Venta venta = carrito.checkout(codigoFactura);
+            venta = carrito.checkout(codigoFactura);
 
-            // Registrar la venta en el historial
-            gestionVentas.registrar(venta);
-
-            // Retirar permanentemente las prendas vendidas del catálogo
-            ventanaCarrito.retirarPrendasVendidas(venta);
+            // Registrar la venta y marcar sus prendas como vendidas
+            if (!gestionVentas.registrar(venta)) {
+                throw new IllegalStateException("No se pudo registrar la venta.");
+            }
 
             // Mostrar resumen de la factura
             String mensaje = String.format(
@@ -327,10 +331,36 @@ public class PanelCarrito extends JPanel {
             ventanaCarrito.actualizarReportes();
 
         } catch (IllegalStateException excepcion) {
+            restaurarCarrito(venta);
             JOptionPane.showMessageDialog(this,
                     excepcion.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
+        } catch (PersistenciaException excepcion) {
+            restaurarCarrito(venta);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo registrar la venta en la base de datos.\n"
+                            + "Es posible que alguna prenda ya se haya vendido o que MySQL no esté disponible.\n"
+                            + "El carrito se conservó para que pueda intentarlo de nuevo.",
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Devuelve al carrito las prendas de una venta que no se pudo registrar.
+     *
+     * <p>Conserva el precio congelado de cada línea y refresca la tabla.</p>
+     *
+     * @param venta venta fallida; si es {@code null} no se realiza ningún cambio.
+     */
+    private void restaurarCarrito(Venta venta) {
+        if (venta == null) {
+            return;
+        }
+        for (LineaCarrito linea : venta.getLineas()) {
+            carrito.agregarLinea(linea);
+        }
+        recargar();
     }
 }

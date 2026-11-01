@@ -4,7 +4,6 @@ package com.tiendaropa.venta.gui;
 import com.tiendaropa.catalogo.gui.VentanaCatalogo;
 import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 import com.tiendaropa.venta.modelo.Carrito;
-import com.tiendaropa.venta.modelo.LineaCarrito;
 import com.tiendaropa.venta.modelo.Venta;
 import com.tiendaropa.venta.repositorio.IGestionVentas;
 import com.tiendaropa.venta.servicio.ServicioBusqueda;
@@ -30,9 +29,6 @@ public class VentanaCarrito extends JFrame {
     private PanelDisponibles panelDisponibles; // Panel de prendas disponibles
     private PanelCarrito panelCarrito;        // Panel del carrito
     private PanelReportes panelReportes;      // Panel de reportes de ventas
-
-    /** Contador secuencial para generar códigos de factura únicos. */
-    private int contadorFactura = 1;
 
 
     /**
@@ -161,23 +157,28 @@ public class VentanaCarrito extends JFrame {
     }
 
     /**
-     * Genera un código de factura único y secuencial.
+     * Genera el siguiente código de factura a partir de las ventas guardadas.
+     *
+     * <p>Busca el número más alto entre las facturas registradas y le suma uno,
+     * para que la numeración continúe aunque se cierre la aplicación.</p>
      *
      * @return código de factura con formato {@code FAC-0001}, {@code FAC-0002}, etc.
+     * @throws com.tiendaropa.infraestructura.PersistenciaException si no se
+     *         pueden consultar las ventas registradas.
      */
     public String generarCodigoFactura() {
-        return String.format("FAC-%04d", contadorFactura++);
-    }
-
-    /**
-     * Elimina permanentemente del catálogo las prendas incluidas en la venta.
-     *
-     * @param venta venta cuyas prendas se retiran del catálogo disponible.
-     */
-    public void retirarPrendasVendidas(Venta venta) {
-        for (LineaCarrito linea : venta.getLineas()) {
-            gestionPrendas.eliminar(linea.getPrenda().getCodigo());
+        int mayor = 0;
+        for (Venta venta : gestionVentas.obtenerTodas()) {
+            String codigo = venta.getCodigoFactura();
+            if (codigo != null && codigo.startsWith("FAC-")) {
+                try {
+                    mayor = Math.max(mayor, Integer.parseInt(codigo.substring(4)));
+                } catch (NumberFormatException excepcion) {
+                    // Se ignoran los códigos que no siguen el formato FAC-####
+                }
+            }
         }
+        return String.format("FAC-%04d", mayor + 1);
     }
 
     /**
