@@ -25,6 +25,9 @@ public class VentanaCatalogo extends JFrame {
     /** Acción para volver a la tienda al cerrar la administración. */
     private final Runnable accionAlVolver;
 
+    /** Acción que se ejecuta después de crear, actualizar o eliminar una prenda. */
+    private final Runnable accionAlModificar;
+
     /** Panel de formulario para capturar y editar prendas. */
     private PanelFormulario panelFormulario;
 
@@ -39,9 +42,24 @@ public class VentanaCatalogo extends JFrame {
      *                       para volver a la tienda.
      */
     public VentanaCatalogo(IGestionPrendas repositorio, Runnable accionAlVolver) {
+        this(repositorio, accionAlVolver, null);
+    }
+
+    /**
+     * Construye la ventana indicando además qué hacer cuando cambia el catálogo.
+     *
+     * @param repositorio       repositorio compartido de prendas que usarán los paneles.
+     * @param accionAlVolver    acción que se ejecuta al cerrar la administración
+     *                          para volver a la tienda.
+     * @param accionAlModificar acción que se ejecuta tras crear, actualizar o
+     *                          eliminar una prenda (por ejemplo, avisar a otras
+     *                          cajas); puede ser {@code null}.
+     */
+    public VentanaCatalogo(IGestionPrendas repositorio, Runnable accionAlVolver, Runnable accionAlModificar) {
 
         this.repositorio = repositorio;
         this.accionAlVolver = accionAlVolver;
+        this.accionAlModificar = accionAlModificar;
 
         setTitle("Administración - Tienda de Ropa de Segunda Mano");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -72,7 +90,12 @@ public class VentanaCatalogo extends JFrame {
      */
     private void construirPaneles() {
         panelTabla = new PanelTabla(repositorio);
-        panelFormulario = new PanelFormulario(repositorio, () -> panelTabla.actualizarTabla());
+        panelFormulario = new PanelFormulario(repositorio, () -> {
+            panelTabla.actualizarTabla();
+            if (accionAlModificar != null) {
+                accionAlModificar.run();
+            }
+        });
 
         add(panelFormulario, BorderLayout.WEST);
         add(panelTabla, BorderLayout.CENTER);
@@ -89,6 +112,15 @@ public class VentanaCatalogo extends JFrame {
                 }
             }
         });
+    }
+
+    /**
+     * Vuelve a cargar la tabla del catálogo desde la base de datos.
+     *
+     * <p>Se usa cuando otra caja modificó las prendas o registró una venta.</p>
+     */
+    public void refrescarCatalogo() {
+        panelTabla.actualizarTabla();
     }
 
     /**
