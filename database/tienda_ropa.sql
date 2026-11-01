@@ -174,6 +174,19 @@ CREATE TABLE IF NOT EXISTS Linea_Venta (
 ) ENGINE=InnoDB;
 
 
+/* Usuario administrador inicial de la tienda (para entrar a "Administrador").
+   No confundir con la cuenta tienda_app de MySQL: son cuentas distintas.
+   Usuario: admin   Contrasena inicial: Admin2026
+   Solo se guarda el hash PBKDF2 de la contrasena, nunca el texto original.
+   Para crear otros usuarios, ejecutar la clase GeneradorHashContrasena.
+   INSERT IGNORE evita un error si el usuario ya existe. */
+INSERT IGNORE INTO Usuario (username, password_hash, rol) VALUES (
+    'admin',
+    'pbkdf2_sha256$120000$W0LIGhUZkwLqhwCGum2WaQ==$keeEWRd6TyZYciFROjPN5pBufqI2GN698wJkTOS7/PU=',
+    'ADMIN'
+);
+
+
 
 /* =========================================
    SECCION 3: USUARIO Y PERMISOS

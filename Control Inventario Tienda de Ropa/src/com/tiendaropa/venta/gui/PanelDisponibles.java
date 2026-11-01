@@ -108,7 +108,13 @@ public class PanelDisponibles extends JPanel{
 
         // Crear modelo de tabla vacío
         modeloTabla = new DefaultTableModel(columnas, 0) {
-            // Hacer la tabla no editable
+            /**
+             * Impide editar las celdas: la tabla solo muestra prendas.
+             *
+             * @param row    fila de la celda.
+             * @param column columna de la celda.
+             * @return siempre {@code false}.
+             */
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -190,12 +196,20 @@ public class PanelDisponibles extends JPanel{
         btnAgregar.setEnabled(false);
 
         new SwingWorker<List<Prenda>, Void>() {
+            /**
+             * Busca las prendas disponibles en MySQL, fuera del hilo de Swing.
+             *
+             * @return prendas que cumplen los filtros.
+             */
             @Override
             protected List<Prenda> doInBackground() {
                 // Consulta a MySQL en un hilo de trabajo, fuera del hilo de Swing
                 return servicio.buscarAvanzado(tipo, talla, estado, precioMin, precioMax);
             }
 
+            /**
+             * Muestra las prendas encontradas, en el hilo de Swing.
+             */
             @Override
             protected void done() {
                 // done() se ejecuta en el hilo de Swing: aquí sí se puede tocar la tabla

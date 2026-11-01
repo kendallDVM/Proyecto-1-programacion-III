@@ -53,6 +53,11 @@ public class VentanaCatalogo extends JFrame {
 
         // Si se cierra esta ventana (con la X), volver a la tienda
         addWindowListener(new WindowAdapter() {
+            /**
+             * Vuelve a la tienda cuando el usuario cierra la ventana con la X.
+             *
+             * @param evento evento de cierre de la ventana.
+             */
             @Override
             public void windowClosing(WindowEvent evento) {
                 if (accionAlVolver != null) {

@@ -47,6 +47,14 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
             + "WHERE codigo LIKE ? OR tipo LIKE ? OR talla LIKE ? OR estado LIKE ? "
             + "OR CAST(precio AS CHAR) LIKE ? ORDER BY codigo";
 
+    /**
+     * Inserta una prenda nueva en la tabla {@code Prenda}.
+     *
+     * @param prenda prenda a registrar; debe tener código.
+     * @return {@code true} si se insertó; {@code false} si la prenda o su código son nulos.
+     * @throws PersistenciaException si MySQL rechaza la inserción (por ejemplo,
+     *                               código duplicado) o no hay conexión.
+     */
     @Override
     public boolean registrar(Prenda prenda) {
         if (prenda == null || prenda.getCodigo() == null) {
@@ -66,6 +74,14 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Actualiza tipo, talla, estado, precio y disponibilidad de una prenda existente.
+     *
+     * @param prenda prenda con los datos nuevos; se identifica por su código.
+     * @return {@code true} si se actualizó una fila; {@code false} si no existe
+     *         una prenda con ese código o la prenda es nula.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public boolean actualizar(Prenda prenda) {
         if (prenda == null || prenda.getCodigo() == null) {
@@ -85,6 +101,14 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Elimina físicamente una prenda de la tabla {@code Prenda}.
+     *
+     * @param codigo código de la prenda a eliminar.
+     * @return {@code true} si se eliminó; {@code false} si no existía o el código es nulo.
+     * @throws PersistenciaException si la prenda forma parte de una venta
+     *                               (clave foránea) o hay un error de conexión.
+     */
     @Override
     public boolean eliminar(String codigo) {
         if (codigo == null) {
@@ -99,6 +123,13 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Busca una prenda por su código.
+     *
+     * @param codigo código de la prenda.
+     * @return la prenda encontrada, o {@code null} si no existe o el código es nulo.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public Prenda buscarPorCodigo(String codigo) {
         if (codigo == null) {
@@ -118,6 +149,12 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Devuelve todas las prendas del catálogo, vendidas o no, ordenadas por código.
+     *
+     * @return lista de prendas; vacía si no hay ninguna.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public List<Prenda> obtenerTodas() {
         return consultar(SQL_SELECT_ALL);
@@ -132,21 +169,50 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         return consultar(SQL_SELECT_DISPONIBLES);
     }
 
+    /**
+     * Devuelve las prendas de un tipo determinado.
+     *
+     * @param tipo tipo de prenda a filtrar.
+     * @return lista de prendas de ese tipo, ordenadas por código.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public List<Prenda> filtrarPorTipo(TipoPrenda tipo) {
         return consultarConParametro(SQL_FILTER_TIPO, tipo.name());
     }
 
+    /**
+     * Devuelve las prendas de una talla determinada.
+     *
+     * @param talla talla a filtrar.
+     * @return lista de prendas de esa talla, ordenadas por código.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public List<Prenda> filtrarPorTalla(Talla talla) {
         return consultarConParametro(SQL_FILTER_TALLA, talla.name());
     }
 
+    /**
+     * Devuelve las prendas con un estado de conservación determinado.
+     *
+     * @param estado estado a filtrar.
+     * @return lista de prendas con ese estado, ordenadas por código.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public List<Prenda> filtrarPorEstado(EstadoPrenda estado) {
         return consultarConParametro(SQL_FILTER_ESTADO, estado.name());
     }
 
+    /**
+     * Devuelve las prendas cuyo precio está dentro de un rango (incluye los extremos).
+     *
+     * @param precioMinimo precio mínimo del rango.
+     * @param precioMaximo precio máximo del rango.
+     * @return lista de prendas dentro del rango, ordenadas por código.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public List<Prenda> filtrarPorPrecio(double precioMinimo, double precioMaximo) {
         try (Connection conn = ConexionMySQL.obtenerConexion();
@@ -161,6 +227,16 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Busca prendas cuyo código, tipo, talla, estado o precio contengan un texto.
+     *
+     * <p>El texto se pasa como parámetro del {@code PreparedStatement}, nunca
+     * concatenado en la consulta.</p>
+     *
+     * @param texto texto a buscar; si está vacío se devuelven todas las prendas.
+     * @return lista de prendas que coinciden, ordenadas por código.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     @Override
     public List<Prenda> buscarPorTexto(String texto) {
         if (texto == null || texto.isBlank()) {
@@ -184,6 +260,13 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
 
     // ---------- Métodos privados de apoyo ----------
 
+    /**
+     * Ejecuta una consulta sin parámetros que devuelve prendas.
+     *
+     * @param sql consulta {@code SELECT} fija definida en esta clase.
+     * @return lista de prendas obtenidas.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     private List<Prenda> consultar(String sql) {
         try (Connection conn = ConexionMySQL.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -194,6 +277,14 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Ejecuta una consulta con un único parámetro de texto que devuelve prendas.
+     *
+     * @param sql   consulta {@code SELECT} fija con un marcador {@code ?}.
+     * @param valor valor que reemplaza al marcador.
+     * @return lista de prendas obtenidas.
+     * @throws PersistenciaException si ocurre un error en la base de datos.
+     */
     private List<Prenda> consultarConParametro(String sql, String valor) {
         try (Connection conn = ConexionMySQL.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -206,6 +297,13 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         }
     }
 
+    /**
+     * Convierte todas las filas de un resultado en objetos {@link Prenda}.
+     *
+     * @param rs resultado de una consulta sobre la tabla {@code Prenda}.
+     * @return lista de prendas, en el mismo orden que las filas.
+     * @throws SQLException si no se puede leer el resultado.
+     */
     private List<Prenda> mapearLista(ResultSet rs) throws SQLException {
         List<Prenda> lista = new ArrayList<>();
         while (rs.next()) {
@@ -214,6 +312,15 @@ public class RepositorioPrendasJDBC implements IGestionPrendas {
         return lista;
     }
 
+    /**
+     * Convierte la fila actual de un resultado en una {@link Prenda}.
+     *
+     * <p>Los textos de tipo, talla y estado se convierten a sus enumeraciones.</p>
+     *
+     * @param rs resultado posicionado en la fila que se desea leer.
+     * @return prenda con los datos de la fila.
+     * @throws SQLException si no se puede leer alguna columna.
+     */
     private Prenda mapearPrenda(ResultSet rs) throws SQLException {
         String codigo = rs.getString("codigo");
         TipoPrenda tipo = TipoPrenda.valueOf(rs.getString("tipo"));

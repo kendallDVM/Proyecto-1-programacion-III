@@ -48,6 +48,14 @@ public class LineaCarrito {
         this(prenda, precioEnMomento, LocalDateTime.now());
     }
 
+    /**
+     * Constructor común que usan los constructores públicos.
+     *
+     * @param prenda          objeto {@link Prenda} de la línea (no puede ser nulo).
+     * @param precioEnMomento precio congelado de la prenda.
+     * @param fechaAgregacion fecha en que la prenda se agregó al carrito.
+     * @throws IllegalArgumentException si la prenda es nula.
+     */
     private LineaCarrito(Prenda prenda, double precioEnMomento, LocalDateTime fechaAgregacion) {
         // Validación: la prenda no puede ser nula
         if (prenda == null) {

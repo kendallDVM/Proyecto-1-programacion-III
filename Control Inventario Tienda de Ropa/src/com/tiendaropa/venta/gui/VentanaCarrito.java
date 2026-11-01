@@ -3,11 +3,15 @@ package com.tiendaropa.venta.gui;
 
 import com.tiendaropa.catalogo.gui.VentanaCatalogo;
 import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
+import com.tiendaropa.cliente.repositorio.IGestionClientes;
+import com.tiendaropa.seguridad.modelo.Usuario;
+import com.tiendaropa.seguridad.servicio.ServicioAutenticacion;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.Venta;
 import com.tiendaropa.venta.repositorio.IGestionVentas;
 import com.tiendaropa.venta.servicio.ServicioBusqueda;
 import javax.swing.*;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -22,6 +26,8 @@ public class VentanaCarrito extends JFrame {
 
     private IGestionPrendas gestionPrendas;   // Repositorio de prendas (compartido con la administración)
     private IGestionVentas gestionVentas;     // Repositorio de ventas (compartido)
+    private IGestionClientes gestionClientes; // Consulta de clientes para las ventas
+    private ServicioAutenticacion servicioAutenticacion; // Verificación del acceso de administrador
     private Carrito carrito;                     // Carrito del cliente
     private ServicioBusqueda servicioBusqueda;   // Servicio de búsqueda
 
@@ -36,11 +42,16 @@ public class VentanaCarrito extends JFrame {
      *
      * @param gestionPrendas Repositorio de prendas (compartido con la administración).
      * @param gestionVentas  Repositorio de ventas (historial).
+     * @param gestionClientes Consulta de clientes para asociarlos a las ventas.
+     * @param servicioAutenticacion Servicio que verifica el acceso a la administración.
      */
-    public VentanaCarrito(IGestionPrendas gestionPrendas, IGestionVentas gestionVentas) {
+    public VentanaCarrito(IGestionPrendas gestionPrendas, IGestionVentas gestionVentas,
+                          IGestionClientes gestionClientes, ServicioAutenticacion servicioAutenticacion) {
 
         this.gestionPrendas = gestionPrendas;
         this.gestionVentas = gestionVentas;
+        this.gestionClientes = gestionClientes;
+        this.servicioAutenticacion = servicioAutenticacion;
         this.carrito = new Carrito();
         this.servicioBusqueda = new ServicioBusqueda(gestionPrendas);
 
@@ -96,7 +107,7 @@ public class VentanaCarrito extends JFrame {
         panelDisponibles = new PanelDisponibles(carrito, this);
         panelDisponibles.setPanelBusqueda(panelBusqueda);  // ← AGREGA ESTA LÍNEA
 
-        panelCarrito = new PanelCarrito(carrito, this, gestionVentas);
+        panelCarrito = new PanelCarrito(carrito, this, gestionVentas, gestionClientes);
 
         panelReportes = new PanelReportes(gestionVentas);
     }
@@ -192,30 +203,13 @@ public class VentanaCarrito extends JFrame {
     }
 
     /**
-     * Abre la administración (previa autenticación), ocultando la tienda.
+     * Abre la administración, previa autenticación, ocultando la tienda.
+     *
+     * <p>Pide usuario y contraseña, y los verifica en segundo plano contra los
+     * usuarios guardados en MySQL. Solo los usuarios con rol administrador
+     * pueden entrar.</p>
      */
     public void abrirAdministracion() {
-        if (verificarCredenciales()) {
-            setVisible(false);
-            VentanaCatalogo ventanaAdmin = new VentanaCatalogo(gestionPrendas, this::mostrarTienda);
-            ventanaAdmin.setVisible(true);
-        }
-    }
-
-    /**
-     * Vuelve a mostrar la tienda y refresca las prendas disponibles.
-     */
-    private void mostrarTienda() {
-        setVisible(true);
-        actualizarDisponibles();
-    }
-
-    /**
-     * Autenticación demostrativa (no es un sistema de seguridad real).
-     *
-     * @return {@code true} si las credenciales admin/1234 son correctas.
-     */
-    private boolean verificarCredenciales() {
         JPanel panel = new JPanel(new java.awt.GridLayout(2, 2, 8, 8));
         JTextField campoUsuario = new JTextField(10);
         JPasswordField campoPassword = new JPasswordField(10);
@@ -226,19 +220,59 @@ public class VentanaCarrito extends JFrame {
 
         int opcion = JOptionPane.showConfirmDialog(this, panel, "Acceso de administrador",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
         if (opcion != JOptionPane.OK_OPTION) {
-            return false;
+            return;
         }
-        String usuario = campoUsuario.getText();
-        String contrasena = new String(campoPassword.getPassword());
-        boolean valido = "admin".equals(usuario) && "1234".equals(contrasena);
-        if (!valido) {
-            JOptionPane.showMessageDialog(this,
-                    "Usuario o contraseña incorrectos.",
-                    "Acceso denegado", JOptionPane.ERROR_MESSAGE);
-        }
-        return valido;
+        String usuario = campoUsuario.getText().trim();
+        char[] contrasena = campoPassword.getPassword();
+        setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+
+        new SwingWorker<Usuario, Void>() {
+            /**
+             * Verifica las credenciales contra MySQL fuera del hilo de Swing.
+             *
+             * @return el usuario autenticado, o {@code null} si las credenciales son incorrectas.
+             */
+            @Override
+            protected Usuario doInBackground() {
+                return servicioAutenticacion.autenticar(usuario, contrasena);
+            }
+
+            /**
+             * Abre la administración o informa el error, en el hilo de Swing.
+             */
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                try {
+                    Usuario autenticado = get();
+                    if (autenticado == null || !autenticado.esAdministrador()) {
+                        JOptionPane.showMessageDialog(VentanaCarrito.this,
+                                "Usuario o contraseña incorrectos.",
+                                "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    setVisible(false);
+                    VentanaCatalogo ventanaAdmin = new VentanaCatalogo(gestionPrendas, VentanaCarrito.this::mostrarTienda);
+                    ventanaAdmin.setVisible(true);
+                } catch (InterruptedException excepcion) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException excepcion) {
+                    JOptionPane.showMessageDialog(VentanaCarrito.this,
+                            "No se pudo verificar el usuario en la base de datos.\n"
+                                    + "Verifique que MySQL esté disponible e intente de nuevo.",
+                            "Error de base de datos", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Vuelve a mostrar la tienda y refresca las prendas disponibles.
+     */
+    private void mostrarTienda() {
+        setVisible(true);
+        actualizarDisponibles();
     }
 
 }

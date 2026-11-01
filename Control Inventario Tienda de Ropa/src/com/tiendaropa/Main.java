@@ -6,7 +6,11 @@ import com.tiendaropa.catalogo.modelo.Talla;
 import com.tiendaropa.catalogo.modelo.TipoPrenda;
 import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 import com.tiendaropa.catalogo.repositorio.RepositorioPrendasJDBC;
+import com.tiendaropa.cliente.repositorio.IGestionClientes;
+import com.tiendaropa.cliente.repositorio.RepositorioClientesJDBC;
 import com.tiendaropa.infraestructura.PersistenciaException;
+import com.tiendaropa.seguridad.repositorio.RepositorioUsuariosJDBC;
+import com.tiendaropa.seguridad.servicio.ServicioAutenticacion;
 import com.tiendaropa.venta.gui.VentanaCarrito;
 import com.tiendaropa.venta.repositorio.IGestionVentas;
 import com.tiendaropa.venta.repositorio.RepositorioVentasJDBC;
@@ -17,8 +21,9 @@ import javax.swing.SwingUtilities;
 /**
  * Punto de entrada principal de la aplicación de la tienda de ropa de segunda mano.
  *
- * <p>Construye los repositorios JDBC que persisten la información en MySQL,
- * carga datos de ejemplo solo si el catálogo está vacío y abre la ventana
+ * <p>Construye los repositorios JDBC que persisten la información en MySQL
+ * (prendas, ventas, clientes y usuarios), carga datos de ejemplo solo si el
+ * catálogo está vacío y abre la ventana
  * principal (la tienda / carrito). La administración (catálogo) se abre
  * desde la propia tienda bajo autenticación.</p>
  */
@@ -40,6 +45,12 @@ public class Main {
         // Repositorio para el historial de ventas
         IGestionVentas repositorioVentas = new RepositorioVentasJDBC();
 
+        // Clientes asociados a las ventas (funcionalidad adicional)
+        IGestionClientes repositorioClientes = new RepositorioClientesJDBC();
+
+        // Inicio de sesión del administrador con usuarios guardados en MySQL (funcionalidad adicional)
+        ServicioAutenticacion servicioAutenticacion = new ServicioAutenticacion(new RepositorioUsuariosJDBC());
+
         try {
             // Primera consulta a MySQL: también comprueba que la conexión funciona
             cargarDatosEjemplo(repositorio);
@@ -50,7 +61,8 @@ public class Main {
 
         // La tienda es la ventana principal; se crea en el hilo de eventos de Swing
         SwingUtilities.invokeLater(() -> {
-            VentanaCarrito ventanaCarrito = new VentanaCarrito(repositorio, repositorioVentas);
+            VentanaCarrito ventanaCarrito = new VentanaCarrito(repositorio, repositorioVentas,
+                    repositorioClientes, servicioAutenticacion);
             ventanaCarrito.setVisible(true);
         });
     }

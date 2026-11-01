@@ -1,5 +1,7 @@
 package com.tiendaropa.venta.modelo;
 
+import com.tiendaropa.cliente.modelo.Cliente;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,6 +43,9 @@ public class Venta {
     /** Monto final a pagar (subtotal más IVA). */
     private final double total;
 
+    /** Cliente asociado a la venta, o {@code null} si es una venta sin cliente. */
+    private final Cliente cliente;
+
     /**
      * Construye una venta a partir del código de factura y las líneas vendidas.
      *
@@ -51,7 +56,18 @@ public class Venta {
      * @param lineas        líneas (prendas) que conforman la venta.
      */
     public Venta(String codigoFactura, List<LineaCarrito> lineas) {
-        this(codigoFactura, LocalDateTime.now(), lineas);
+        this(codigoFactura, LocalDateTime.now(), lineas, null);
+    }
+
+    /**
+     * Construye una venta nueva asociada a un cliente.
+     *
+     * @param codigoFactura código único de la factura.
+     * @param lineas        líneas (prendas) que conforman la venta.
+     * @param cliente       cliente que realiza la compra, o {@code null} si no se indica.
+     */
+    public Venta(String codigoFactura, List<LineaCarrito> lineas, Cliente cliente) {
+        this(codigoFactura, LocalDateTime.now(), lineas, cliente);
     }
 
     /**
@@ -65,6 +81,22 @@ public class Venta {
      * @param lineas        líneas (prendas) que conforman la venta.
      */
     public Venta(String codigoFactura, LocalDateTime fecha, List<LineaCarrito> lineas) {
+        this(codigoFactura, fecha, lineas, null);
+    }
+
+    /**
+     * Construye una venta con fecha y cliente conocidos.
+     *
+     * <p>Constructor utilizado para reconstruir una venta desde la base de datos,
+     * conservando la fecha original y el cliente asociado.</p>
+     *
+     * @param codigoFactura código único de la factura.
+     * @param fecha         fecha y hora de la venta.
+     * @param lineas        líneas (prendas) que conforman la venta.
+     * @param cliente       cliente asociado, o {@code null} si no tiene.
+     */
+    public Venta(String codigoFactura, LocalDateTime fecha, List<LineaCarrito> lineas, Cliente cliente) {
+        this.cliente = cliente;
         this.codigoFactura = codigoFactura;
         this.fecha = fecha;
         this.lineas = lineas == null
@@ -148,6 +180,15 @@ public class Venta {
      */
     public double getTotal() {
         return total;
+    }
+
+    /**
+     * Devuelve el cliente asociado a la venta.
+     *
+     * @return cliente de la venta, o {@code null} si es una venta sin cliente.
+     */
+    public Cliente getCliente() {
+        return cliente;
     }
 
     /**

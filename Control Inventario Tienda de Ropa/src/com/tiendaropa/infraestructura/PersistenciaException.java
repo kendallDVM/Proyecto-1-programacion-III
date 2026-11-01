@@ -16,7 +16,7 @@ public class PersistenciaException extends RuntimeException {
      * Construye la excepción con un mensaje descriptivo y la causa original.
      *
      * @param mensaje descripción del error de persistencia.
-     * @param causa   {@link SQLException} original que motivó el error.
+     * @param causa   {@link java.sql.SQLException} original que motivó el error.
      */
     public PersistenciaException(String mensaje, Throwable causa) {
         super(mensaje, causa);

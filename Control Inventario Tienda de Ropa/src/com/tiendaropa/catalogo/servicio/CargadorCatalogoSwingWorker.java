@@ -14,11 +14,11 @@ import javax.swing.SwingWorker;
  * fuera del EDT. El resultado se entrega en {@code done()}, que sí se ejecuta
  * en el EDT, permitiendo actualizar la interfaz de forma segura.</p>
  *
- * <p>Ejemplo de uso:
+ * <p>Ejemplo de uso:</p>
  * <pre>{@code
  * CargadorCatalogoSwingWorker worker = new CargadorCatalogoSwingWorker(repositorio);
  * worker.execute();
- * }</pre></p>
+ * }</pre>
  */
 public class CargadorCatalogoSwingWorker extends SwingWorker<List<Prenda>, Void> {
 

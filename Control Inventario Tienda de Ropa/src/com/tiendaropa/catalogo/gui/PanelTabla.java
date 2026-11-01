@@ -80,6 +80,13 @@ public class PanelTabla extends JPanel {
      */
     private void construirTabla() {
         modelo = new DefaultTableModel(new Object[]{"Código", "Tipo", "Talla", "Estado", "Precio", "Disponible"}, 0) {
+            /**
+             * Impide editar las celdas: los cambios se hacen desde el formulario.
+             *
+             * @param fila    fila de la celda.
+             * @param columna columna de la celda.
+             * @return siempre {@code false}.
+             */
             @Override
             public boolean isCellEditable(int fila, int columna) {
                 return false;
@@ -132,6 +139,9 @@ public class PanelTabla extends JPanel {
 
         if (filtro.isEmpty()) {
             new CargadorCatalogoSwingWorker(repositorio) {
+                /**
+                 * Muestra el catálogo cargado, en el hilo de Swing.
+                 */
                 @Override
                 protected void done() {
                     super.done(); // Guarda el resultado o el error de la consulta
@@ -140,12 +150,20 @@ public class PanelTabla extends JPanel {
             }.execute();
         } else {
             new SwingWorker<List<Prenda>, Void>() {
+                /**
+                 * Busca las prendas por texto en MySQL, fuera del hilo de Swing.
+                 *
+                 * @return prendas que coinciden con el filtro.
+                 */
                 @Override
                 protected List<Prenda> doInBackground() {
                     // Consulta a MySQL en un hilo de trabajo, fuera del hilo de Swing
                     return repositorio.buscarPorTexto(filtro);
                 }
 
+                /**
+                 * Muestra el resultado de la búsqueda, en el hilo de Swing.
+                 */
                 @Override
                 protected void done() {
                     try {

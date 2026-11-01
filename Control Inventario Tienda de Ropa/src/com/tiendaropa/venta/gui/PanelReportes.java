@@ -102,8 +102,15 @@ public class PanelReportes extends JPanel {
      */
     private JScrollPane construirTabla() {
         modelo = new DefaultTableModel(new Object[]{
-                "Factura", "Fecha", "Prendas", "Subtotal", "IVA", "Total"
+                "Factura", "Fecha", "Cliente", "Prendas", "Subtotal", "IVA", "Total"
         }, 0) {
+            /**
+             * Impide editar las celdas: el reporte es de solo lectura.
+             *
+             * @param fila    fila de la celda.
+             * @param columna columna de la celda.
+             * @return siempre {@code false}.
+             */
             @Override
             public boolean isCellEditable(int fila, int columna) {
                 return false;
@@ -141,6 +148,11 @@ public class PanelReportes extends JPanel {
         botonVerTodas.setEnabled(false);
 
         new SwingWorker<List<Venta>, Void>() {
+            /**
+             * Consulta las ventas en MySQL fuera del hilo de Swing.
+             *
+             * @return ventas encontradas, o {@code null} si la factura buscada no existe.
+             */
             @Override
             protected List<Venta> doInBackground() {
                 // Consulta a MySQL en un hilo de trabajo, fuera del hilo de Swing
@@ -151,6 +163,9 @@ public class PanelReportes extends JPanel {
                 return venta == null ? null : List.of(venta);
             }
 
+            /**
+             * Muestra el resultado en la tabla, en el hilo de Swing.
+             */
             @Override
             protected void done() {
                 // done() se ejecuta en el hilo de Swing: aquí sí se puede tocar la tabla
@@ -193,6 +208,7 @@ public class PanelReportes extends JPanel {
             modelo.addRow(new Object[]{
                     venta.getCodigoFactura(),
                     venta.getFechaFormateada(),
+                    venta.getCliente() != null ? venta.getCliente().toString() : "Sin cliente",
                     venta.getCantidadPrendas(),
                     String.format("¢%,.2f", venta.getSubtotal()),
                     String.format("¢%,.2f", venta.getIva()),

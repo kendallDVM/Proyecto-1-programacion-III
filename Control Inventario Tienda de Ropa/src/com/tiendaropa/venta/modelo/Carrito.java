@@ -1,6 +1,7 @@
 package com.tiendaropa.venta.modelo;
 
 
+import com.tiendaropa.cliente.modelo.Cliente;
 import com.tiendaropa.venta.servicio.ICarrito;
 
 import java.util.ArrayList;
@@ -139,11 +140,27 @@ public class Carrito implements ICarrito {
      */
     @Override
     public Venta checkout(String codigoFactura) {
+        return checkout(codigoFactura, null);
+    }
+
+    /**
+     * Convierte el contenido del carrito en una venta asociada a un cliente.
+     *
+     * <p>Funciona igual que {@link #checkout(String)}: vacía el carrito y lo
+     * deja en estado {@link EstadoCarrito#COMPLETADO}.</p>
+     *
+     * @param codigoFactura código único de factura asignado a la venta.
+     * @param cliente       cliente que realiza la compra, o {@code null} si no se indica.
+     * @return la venta generada a partir del contenido del carrito.
+     * @throws IllegalStateException si el carrito está vacío.
+     */
+    @Override
+    public Venta checkout(String codigoFactura, Cliente cliente) {
         if (estaVacio()) {
             throw new IllegalStateException("No se puede completar la venta: el carrito está vacío.");
         }
         estado = EstadoCarrito.PROCESANDO;
-        Venta venta = new Venta(codigoFactura, lineas);
+        Venta venta = new Venta(codigoFactura, lineas, cliente);
         lineas.clear();
         estado = EstadoCarrito.COMPLETADO;
         return venta;
