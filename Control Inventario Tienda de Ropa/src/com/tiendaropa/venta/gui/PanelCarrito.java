@@ -482,6 +482,9 @@ public class PanelCarrito extends JPanel {
      * @param venta venta confirmada en la base de datos.
      */
     private void mostrarVentaExitosa(Venta venta) {
+        // Avisar a las demás cajas antes de mostrar el resumen, para que se actualicen ya
+        ventanaCarrito.notificarVentaRegistrada();
+
         // Mostrar resumen de la factura
         String mensaje = String.format(
                 "Venta completada.%n%nFactura: %s%nCliente: %s%nPrendas: %d%nSubtotal: ¢%,.2f%nIVA (13%%): ¢%,.2f%nTotal: ¢%,.2f",

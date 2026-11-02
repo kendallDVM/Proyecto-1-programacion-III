@@ -6,6 +6,7 @@ import com.tiendaropa.catalogo.repositorio.IGestionPrendas;
 import com.tiendaropa.cliente.repositorio.IGestionClientes;
 import com.tiendaropa.seguridad.modelo.Usuario;
 import com.tiendaropa.seguridad.servicio.ServicioAutenticacion;
+import com.tiendaropa.sincronizacion.ServicioSincronizacion;
 import com.tiendaropa.venta.modelo.Carrito;
 import com.tiendaropa.venta.modelo.Venta;
 import com.tiendaropa.venta.repositorio.IGestionVentas;
@@ -36,6 +37,15 @@ public class VentanaCarrito extends JFrame {
     private PanelCarrito panelCarrito;        // Panel del carrito
     private PanelReportes panelReportes;      // Panel de reportes de ventas
 
+    /** Título base de la ventana, al que se agrega el estado de la sincronización. */
+    private static final String TITULO = "Búsqueda y Carrito - Tienda de Ropa";
+
+    /** Sincronización con otras cajas abiertas; puede ser {@code null}. */
+    private ServicioSincronizacion sincronizacion;
+
+    /** Ventana de administración abierta, o {@code null} si no hay ninguna. */
+    private VentanaCatalogo ventanaAdmin;
+
 
     /**
      * Crea la ventana principal (tienda) con inyección de dependencias.
@@ -47,11 +57,28 @@ public class VentanaCarrito extends JFrame {
      */
     public VentanaCarrito(IGestionPrendas gestionPrendas, IGestionVentas gestionVentas,
                           IGestionClientes gestionClientes, ServicioAutenticacion servicioAutenticacion) {
+        this(gestionPrendas, gestionVentas, gestionClientes, servicioAutenticacion, null);
+    }
+
+    /**
+     * Crea la ventana principal sincronizada con otras cajas abiertas.
+     *
+     * @param gestionPrendas Repositorio de prendas (compartido con la administración).
+     * @param gestionVentas  Repositorio de ventas (historial).
+     * @param gestionClientes Consulta de clientes para asociarlos a las ventas.
+     * @param servicioAutenticacion Servicio que verifica el acceso a la administración.
+     * @param sincronizacion Servicio de sockets que avisa los cambios entre cajas;
+     *                       puede ser {@code null} para trabajar sin sincronizar.
+     */
+    public VentanaCarrito(IGestionPrendas gestionPrendas, IGestionVentas gestionVentas,
+                          IGestionClientes gestionClientes, ServicioAutenticacion servicioAutenticacion,
+                          ServicioSincronizacion sincronizacion) {
 
         this.gestionPrendas = gestionPrendas;
         this.gestionVentas = gestionVentas;
         this.gestionClientes = gestionClientes;
         this.servicioAutenticacion = servicioAutenticacion;
+        this.sincronizacion = sincronizacion;
         this.carrito = new Carrito();
         this.servicioBusqueda = new ServicioBusqueda(gestionPrendas);
 
@@ -67,6 +94,9 @@ public class VentanaCarrito extends JFrame {
         // Organizar los paneles en la ventana
         organizarLayout();
 
+        // Escuchar los avisos de otras cajas
+        configurarSincronizacion();
+
         // Cargar las prendas disponibles al abrir la ventana
         actualizarDisponibles();
     }
@@ -77,7 +107,7 @@ public class VentanaCarrito extends JFrame {
      */
     private void configurarVentana() {
         // Título de la ventana
-        setTitle("Búsqueda y Carrito - Tienda de Ropa");
+        setTitle(TITULO);
 
         // Tamaño inicial de la ventana (ancho x alto)
         setSize(1200, 700);
@@ -178,6 +208,67 @@ public class VentanaCarrito extends JFrame {
     }
 
     /**
+     * Registra esta ventana como oyente de los avisos de otras cajas.
+     *
+     * <p>Los avisos llegan en un hilo de red, por eso la actualización de la
+     * interfaz se envía al hilo de Swing con {@link SwingUtilities#invokeLater}.
+     * El título de la ventana muestra el estado de la sincronización.</p>
+     */
+    private void configurarSincronizacion() {
+        if (sincronizacion == null) {
+            return;
+        }
+        mostrarEstadoSincronizacion(sincronizacion.getEstado());
+        sincronizacion.agregarOyenteEstado(estado ->
+                SwingUtilities.invokeLater(() -> mostrarEstadoSincronizacion(estado)));
+        sincronizacion.agregarOyente(mensaje ->
+                SwingUtilities.invokeLater(this::actualizarPorCambioEnOtraCaja));
+    }
+
+    /**
+     * Muestra en el título de la ventana el estado de la sincronización.
+     *
+     * @param estado descripción del estado, por ejemplo "Caja principal".
+     */
+    private void mostrarEstadoSincronizacion(String estado) {
+        setTitle(TITULO + "  [" + estado + "]");
+    }
+
+    /**
+     * Vuelve a consultar MySQL porque otra caja registró una venta o cambió el catálogo.
+     *
+     * <p>Actualiza las prendas disponibles, los reportes y, si está abierta,
+     * la tabla de la administración.</p>
+     */
+    private void actualizarPorCambioEnOtraCaja() {
+        actualizarDisponibles();
+        actualizarReportes();
+        if (ventanaAdmin != null && ventanaAdmin.isDisplayable()) {
+            ventanaAdmin.refrescarCatalogo();
+        }
+    }
+
+    /**
+     * Avisa a las demás cajas que esta registró una venta.
+     * Se llama desde el carrito después de confirmar la venta.
+     */
+    public void notificarVentaRegistrada() {
+        if (sincronizacion != null) {
+            sincronizacion.notificar(ServicioSincronizacion.MENSAJE_VENTA);
+        }
+    }
+
+    /**
+     * Avisa a las demás cajas que cambió el catálogo de prendas.
+     * Se llama desde la administración después de crear, actualizar o eliminar.
+     */
+    private void notificarCambioCatalogo() {
+        if (sincronizacion != null) {
+            sincronizacion.notificar(ServicioSincronizacion.MENSAJE_CATALOGO);
+        }
+    }
+
+    /**
      * Genera el siguiente código de factura a partir de las ventas guardadas.
      *
      * <p>Busca el número más alto entre las facturas registradas y le suma uno,
@@ -253,7 +344,9 @@ public class VentanaCarrito extends JFrame {
                         return;
                     }
                     setVisible(false);
-                    VentanaCatalogo ventanaAdmin = new VentanaCatalogo(gestionPrendas, VentanaCarrito.this::mostrarTienda);
+                    ventanaAdmin = new VentanaCatalogo(gestionPrendas,
+                            VentanaCarrito.this::mostrarTienda,
+                            VentanaCarrito.this::notificarCambioCatalogo);
                     ventanaAdmin.setVisible(true);
                 } catch (InterruptedException excepcion) {
                     Thread.currentThread().interrupt();
@@ -271,6 +364,7 @@ public class VentanaCarrito extends JFrame {
      * Vuelve a mostrar la tienda y refresca las prendas disponibles.
      */
     private void mostrarTienda() {
+        ventanaAdmin = null;
         setVisible(true);
         actualizarDisponibles();
     }

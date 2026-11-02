@@ -11,6 +11,7 @@ import com.tiendaropa.cliente.repositorio.RepositorioClientesJDBC;
 import com.tiendaropa.infraestructura.PersistenciaException;
 import com.tiendaropa.seguridad.repositorio.RepositorioUsuariosJDBC;
 import com.tiendaropa.seguridad.servicio.ServicioAutenticacion;
+import com.tiendaropa.sincronizacion.ServicioSincronizacion;
 import com.tiendaropa.venta.gui.VentanaCarrito;
 import com.tiendaropa.venta.repositorio.IGestionVentas;
 import com.tiendaropa.venta.repositorio.RepositorioVentasJDBC;
@@ -59,10 +60,15 @@ public class Main {
             return;
         }
 
+        // Sincronización por sockets con otras cajas abiertas (punto extra opcional).
+        // Si no se puede iniciar, la aplicación funciona igual, sin sincronizar.
+        ServicioSincronizacion sincronizacion = new ServicioSincronizacion();
+        sincronizacion.iniciar();
+
         // La tienda es la ventana principal; se crea en el hilo de eventos de Swing
         SwingUtilities.invokeLater(() -> {
             VentanaCarrito ventanaCarrito = new VentanaCarrito(repositorio, repositorioVentas,
-                    repositorioClientes, servicioAutenticacion);
+                    repositorioClientes, servicioAutenticacion, sincronizacion);
             ventanaCarrito.setVisible(true);
         });
     }
